@@ -12,6 +12,16 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toogle;
 
 class TaskResource extends Resource
 {
@@ -25,20 +35,20 @@ class TaskResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('task_name')
+                TextInput::make('task_name')
                     ->required(),
-                Forms\Components\Textarea::make('task_description')
+                Textarea::make('task_description')
                     ->columnSpanFull(),
-                Forms\Components\DatePicker::make('deadline')
+                DatePicker::make('deadline')
                     ->required(),
-                Forms\Components\TextInput::make('status')
+                TextInput::make('status')
                     ->required(),
-                Forms\Components\TextInput::make('parent_task_id')
+                TextInput::make('parent_task_id')
                     ->required()
                     ->numeric(),
-                Forms\Components\Textarea::make('note')
+                Textarea::make('note')
                     ->columnSpanFull(),
-                Forms\Components\Toggle::make('is_deleted')
+                Toggle::make('is_deleted')
                     ->required(),
             ]);
     }
@@ -47,23 +57,23 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('task_name')
+                TextColumn::make('task_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('deadline')
+                TextColumn::make('deadline')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('parent_task_id')
+                TextColumn::make('parent_task_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_deleted')
+                IconColumn::make('is_deleted')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -72,11 +82,11 @@ class TaskResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

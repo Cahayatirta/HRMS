@@ -13,6 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
 
 class DivisionResource extends Resource
@@ -21,15 +24,17 @@ class DivisionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     
+    protected static ?string $navigationGroup = 'Management';
+
     protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('division_name')
+                TextInput::make('division_name')
                     ->required(),
-                Forms\Components\TextInput::make('required_workhours')
+                TextInput::make('required_workhours')
                     ->required()
                     ->numeric()
                     ->default(8),
@@ -58,11 +63,11 @@ class DivisionResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -13,6 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
@@ -75,31 +78,31 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id.name')
+                TextColumn::make('user_id.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('division_id')
+                TextColumn::make('division_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('full_name')
+                TextColumn::make('full_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('gender')
+                TextColumn::make('gender')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('birth_date')
+                TextColumn::make('birth_date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('phone_number')
+                TextColumn::make('phone_number')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image_path'),
-                Tables\Columns\TextColumn::make('status')
+                ImageColumn::make('image_path'),
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_deleted')
+                IconColumn::make('is_deleted')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
