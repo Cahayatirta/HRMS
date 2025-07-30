@@ -13,7 +13,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
@@ -26,9 +29,9 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationGroup = 'Human Resources';
 
     public static function form(Form $form): Form
     {
@@ -78,44 +81,32 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('user_id.name')
-                    ->numeric()
+                ImageColumn::make('image_path')
+                    ->label('Profile Picture')
+                    ->circular()
+                    ->size(50),
+                TextColumn::make('user.name')
+                    ->label('User')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('division_id')
-                    ->numeric()
+                TextColumn::make('division.division_name')
+                    ->label('Division')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('full_name')
-                    ->searchable(),
-                TextColumn::make('gender')
-                    ->searchable(),
-                TextColumn::make('birth_date')
-                    ->date()
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('phone_number')
-                    ->searchable(),
-                ImageColumn::make('image_path'),
-                TextColumn::make('status')
-                    ->searchable(),
-                IconColumn::make('is_deleted')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
+                ViewAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

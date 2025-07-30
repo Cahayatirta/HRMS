@@ -3,86 +3,101 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TaskResource\Pages;
-use App\Filament\Resources\TaskResource\RelationManagers;
 use App\Models\Task;
-use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Toogle;
+use Filament\Forms\Components\View;
 
 class TaskResource extends Resource
 {
     protected static ?string $model = Task::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-check-circle';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'Project Management';
+
+    public static function canCreate(): bool
+    {
+        return false; // Menonaktifkan tombol create
+    }
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                TextInput::make('task_name')
-                    ->required(),
-                Textarea::make('task_description')
-                    ->columnSpanFull(),
-                DatePicker::make('deadline')
-                    ->required(),
-                TextInput::make('status')
-                    ->required(),
-                TextInput::make('parent_task_id')
-                    ->required()
-                    ->numeric(),
-                Textarea::make('note')
-                    ->columnSpanFull(),
-                Toggle::make('is_deleted')
-                    ->required(),
-            ]);
+        return $form->schema([
+            TextInput::make('task_name')
+                ->required()
+                ->columnSpanFull(),
+
+            Textarea::make('task_description')
+                ->columnSpanFull(),
+
+            DatePicker::make('deadline')
+                ->required(),
+
+            TextInput::make('status')
+                ->required(),
+
+            Textarea::make('note')
+                ->columnSpanFull(),
+
+            View::make('components.user-list')
+                ->label('Assigned Users')
+                ->columnSpanFull(),
+        ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->query(Task::query()
+                ->where('parent_task_id', '=', 0)
+                ->where('is_deleted', '=', 0)
+            )
             ->columns([
                 TextColumn::make('task_name')
                     ->searchable(),
+
                 TextColumn::make('deadline')
                     ->date()
                     ->sortable(),
+
                 TextColumn::make('status')
-                    ->searchable(),
-                TextColumn::make('parent_task_id')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_deleted')
-                    ->boolean(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'gray',
+                        'in_progress' => 'warning',
+                        'completed' => 'success',
+                        'issue' => 'danger',
+                        'cancelled' => 'secondary',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                // Tambahkan filter jika perlu
             ])
             ->actions([
-                EditAction::make(),
+                // EditAction::make(),
+                ViewAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -94,7 +109,7 @@ class TaskResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            // Tambahkan RelationManager di sini jika diperlukan
         ];
     }
 
@@ -102,7 +117,7 @@ class TaskResource extends Resource
     {
         return [
             'index' => Pages\ListTasks::route('/'),
-            'create' => Pages\CreateTask::route('/create'),
+            'view' => Pages\ViewTask::route('/{record}'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
     }

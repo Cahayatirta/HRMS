@@ -22,11 +22,9 @@ class DivisionResource extends Resource
 {
     protected static ?string $model = Division::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office';
     
-    protected static ?string $navigationGroup = 'Management';
-
-    protected static ?int $navigationSort = 4;
+    protected static ?string $navigationGroup = 'Human Resources';
 
     public static function form(Form $form): Form
     {

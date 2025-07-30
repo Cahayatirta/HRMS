@@ -39,4 +39,12 @@ class Task extends Model
     {
         return ['subtasks'];
     }
+
+    public function getUsersListAttribute()
+    {
+        return $this->users->map(function ($user) {
+            return ['name' => $user->name];
+        });
+    }
+
 }
