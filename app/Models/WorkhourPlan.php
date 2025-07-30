@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\SoftDeleteBoolean;
+use Illuminate\Http\Request;
 
 class WorkhourPlan extends Model
 {
@@ -18,5 +19,13 @@ class WorkhourPlan extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function softDelete(Request $request)
+    {
+        // $this->is_deleted = true;
+        // $this->save();
+        $ipAddress = $request->ip();
+        dd($ipAddress);
     }
 }

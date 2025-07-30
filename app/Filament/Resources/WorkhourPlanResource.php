@@ -10,6 +10,17 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TimePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -25,18 +36,24 @@ class WorkhourPlanResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
-                    ->numeric(),
-                Forms\Components\DatePicker::make('plan_date')
+                Select::make('user_id')
+                    ->relationship('user', 'name')
                     ->required(),
-                Forms\Components\TextInput::make('planned_starttime')
+                DatePicker::make('plan_date')
                     ->required(),
-                Forms\Components\TextInput::make('planned_endtime')
+                TimePicker::make('planned_starttime')
                     ->required(),
-                Forms\Components\TextInput::make('work_location')
+                TimePicker::make('planned_endtime')
                     ->required(),
-                Forms\Components\Toggle::make('is_deleted')
+                Select::make('work_location')
+                    ->options([
+                        'office' => 'Office',
+                        'anywhere' => 'Anywhere',
+                    ])
+                    ->default('office')
                     ->required(),
+                Toggle::make('is_deleted')
+                    ->hidden(),
             ]);
     }
 
@@ -44,38 +61,57 @@ class WorkhourPlanResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                TextColumn::make('user.name')
+                    ->label('User')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('plan_date')
+                TextColumn::make('plan_date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('planned_starttime'),
-                Tables\Columns\TextColumn::make('planned_endtime'),
-                Tables\Columns\TextColumn::make('work_location')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_deleted')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('planned_starttime'),
+                TextColumn::make('planned_endtime'),
+                TextColumn::make('work_location')
+                    ->searchable()
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('Deleted Status')
+                ->options([
+                    'active' => 'Active',
+                    'deleted' => 'Deleted',
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    if ($data['value'] === 'deleted') {
+                        return $query->where('is_deleted', true);
+                    }
+                    return $query->where('is_deleted', false);
+                }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // ViewAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+            // ->tabs([
+            //     'Aktif' => fn (Builder $query) => $query->where('is_deleted', false),
+            //     'Terhapus' => fn (Builder $query) => $query->where('is_deleted', true),
+            // ]);
     }
 
     public static function getRelations(): array

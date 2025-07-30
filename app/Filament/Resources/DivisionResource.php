@@ -10,9 +10,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -22,7 +24,7 @@ class DivisionResource extends Resource
 {
     protected static ?string $model = Division::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     
     protected static ?string $navigationGroup = 'Human Resources';
 
@@ -56,9 +58,23 @@ class DivisionResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('Deleted Status')
+                    ->options([
+                        'active' => 'Active',
+                        'deleted' => 'Deleted',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if ($data['value'] === 'deleted') {
+                            return $query->where('is_deleted', true);
+                        }
+                        return $query->where('is_deleted', false);
+                    }),
             ])
             ->actions([
                 EditAction::make(),

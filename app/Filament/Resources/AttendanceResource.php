@@ -6,6 +6,12 @@ use App\Filament\Resources\AttendanceResource\Pages;
 use App\Filament\Resources\AttendanceResource\RelationManagers;
 use App\Models\Attendance;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -27,22 +33,31 @@ class AttendanceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('employee_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('start_time')
+                Select::make('employee_id')
+                    ->relationship('employee', 'full_name')
                     ->required(),
-                Forms\Components\TextInput::make('end_time'),
-                Forms\Components\TextInput::make('work_location')
+                TimePicker::make('start_time')
                     ->required(),
-                Forms\Components\TextInput::make('longitude')
-                    ->numeric(),
-                Forms\Components\TextInput::make('latitude')
-                    ->numeric(),
-                Forms\Components\FileUpload::make('image_path')
+                TimePicker::make('end_time'),
+                Select::make('work_location')
+                    ->required()
+                    ->options([
+                        'office' => 'Office',
+                        'anywhere' => 'Anywhere',
+                    ])
+                    ->disabled(fn ($get) => $get('is_in_office_radius') === false),
+                TextInput::make('latitude')
+                    ->numeric()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state) => logger('Latitude changed:', [$state])),
+                TextInput::make('longitude')
+                    ->numeric()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state) => logger('Longitude changed:', [$state])),
+                FileUpload::make('image_path')
                     ->image(),
-                Forms\Components\TextInput::make('task_link'),
-                Forms\Components\Toggle::make('is_deleted')
-                    ->required(),
+                TextInput::make('task_link'),
+                Hidden::make('is_in_office_radius')->default(false),
             ]);
     }
 

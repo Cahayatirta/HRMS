@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -40,7 +43,26 @@ class EmployeeResource extends Resource
                 Select::make('user_id')
                     ->label('User')
                     ->required()
-                    ->relationship('user', 'name'),
+                    ->options(function () {
+                        $editingId = request()->route('record');
+                        if ($editingId) {
+                            // Edit mode: show all users, but mark the current one as selected
+                            $employee = Employee::find($editingId);
+                            $users = User::where(function ($query) use ($employee) {
+                                $query->whereDoesntHave('employee')
+                                      ->orWhere('id', $employee->user_id);
+                            })->pluck('name', 'id');
+                        } else {
+                            // Create mode: only users without employee
+                            $users = User::doesntHave('employee')->pluck('name', 'id');
+                        }
+
+                        return $users->isNotEmpty()
+                            ? $users
+                            : ['' => 'Semua user sudah memiliki data employee'];
+                    })
+                    ->searchable()
+                    ->disabled(fn (string $context): bool => $context === 'edit'),
                 Select::make('division_id')
                     ->label('Division')
                     ->required()
@@ -67,7 +89,8 @@ class EmployeeResource extends Resource
                     ->columnSpanFull()
                     ->placeholder('Masukkan alamat...'),
                 FileUpload::make('image_path')
-                    ->image(),
+                    ->image()
+                    ->directory('employees'),
                 Select::make('status')
                     ->required()
                     ->options([
@@ -96,13 +119,27 @@ class EmployeeResource extends Resource
                 TextColumn::make('full_name')
                     ->searchable()
                     ->sortable(),
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('Deleted Status')
+                ->options([
+                    'active' => 'Active',
+                    'deleted' => 'Deleted',
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    if ($data['value'] === 'deleted') {
+                        return $query->where('is_deleted', true);
+                    }
+                    return $query->where('is_deleted', false);
+                }),
             ])
             ->actions([
                 EditAction::make(),
-                ViewAction::make(),
+                // ViewAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
