@@ -21,4 +21,10 @@ class ServiceTypeData extends Model
     {
         return $this->belongsTo(ServiceTypeField::class, 'field_id');
     }
+    
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
 }

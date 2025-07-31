@@ -8,3 +8,4 @@ class UserTask extends Model
 {
     //
 }
+

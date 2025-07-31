@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\MeetingResource\Pages;
-use App\Filament\Resources\MeetingResource\RelationManagers;
-use App\Models\Meeting;
+use App\Filament\Resources\ServiceResource\Pages;
+use App\Filament\Resources\ServiceResource\RelationManagers;
+use App\Models\Service;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,28 +15,33 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class MeetingResource extends Resource
+class ServiceResource extends Resource
 {
-    protected static ?string $model = Meeting::class;
+    protected static ?string $model = Service::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static ?string $navigationGroup = 'Project Management';
+    protected static ?string $navigationGroup = 'Client And Service Management';    
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('meeting_title')
+                Forms\Components\TextInput::make('client_id')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('service_type_id')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('status')
                     ->required(),
-                Forms\Components\Textarea::make('meeting_note')
-                    ->columnSpanFull(),
-                Forms\Components\DatePicker::make('date')
-                    ->required(),
-                Forms\Components\TextInput::make('start_time')
-                    ->required(),
-                Forms\Components\TextInput::make('end_time')
-                    ->required(),
+                Forms\Components\TextInput::make('price')
+                    ->required()
+                    ->numeric()
+                    ->default(0)
+                    ->prefix('$'),
+                Forms\Components\DateTimePicker::make('start_time'),
+                Forms\Components\DateTimePicker::make('expired_time'),
                 Forms\Components\Toggle::make('is_deleted')
                     ->required(),
             ]);
@@ -46,13 +51,23 @@ class MeetingResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('meeting_title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->date()
+                Tables\Columns\TextColumn::make('client_id')
+                    ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time'),
-                Tables\Columns\TextColumn::make('end_time'),
+                Tables\Columns\TextColumn::make('service_type_id')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('price')
+                    ->money()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('expired_time')
+                    ->dateTime()
+                    ->sortable(),
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
@@ -99,9 +114,9 @@ class MeetingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMeetings::route('/'),
-            'create' => Pages\CreateMeeting::route('/create'),
-            'edit' => Pages\EditMeeting::route('/{record}/edit'),
+            'index' => Pages\ListServices::route('/'),
+            'create' => Pages\CreateService::route('/create'),
+            'edit' => Pages\EditService::route('/{record}/edit'),
         ];
     }
 }

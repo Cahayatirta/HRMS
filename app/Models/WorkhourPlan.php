@@ -23,9 +23,9 @@ class WorkhourPlan extends Model
 
     public function softDelete(Request $request)
     {
-        // $this->is_deleted = true;
-        // $this->save();
-        $ipAddress = $request->ip();
-        dd($ipAddress);
+        $this->is_deleted = true;
+        $this->save();
+        // $ipAddress = $request->ip();
+        // dd($ipAddress);
     }
 }

@@ -16,8 +16,8 @@ class EditWorkhourPlan extends EditRecord
             Actions\DeleteAction::make()
                 ->action(function ($record) {
                     $record->softDelete(request());
-                }),
-                // ->requiresConfirmation(),
+                })
+                ->requiresConfirmation(),
         ];
     }
 }

@@ -13,6 +13,8 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
@@ -91,9 +93,24 @@ class TaskResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                    
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
-                // Tambahkan filter jika perlu
+                SelectFilter::make('Deleted Status')
+                    ->options([
+                        'active' => 'Active',
+                        'deleted' => 'Deleted',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if ($data['value'] === 'deleted') {
+                            return $query->where('is_deleted', true);
+                        }
+                        return $query->where('is_deleted', false);
+                    }),
             ])
             ->actions([
                 // EditAction::make(),

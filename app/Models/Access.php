@@ -17,4 +17,10 @@ class Access extends Model
         return $this->belongsToMany(Division::class, 'division_accesses', 'access_id', 'division_id')->withTimestamps();
     }
 
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
+
 }

@@ -16,4 +16,10 @@ class ServiceType extends Model
     {
         return $this->hasMany(ServiceTypeField::class, 'service_type_id');
     }
+    
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
 }

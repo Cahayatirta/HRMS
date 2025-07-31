@@ -21,4 +21,10 @@ class Division extends Model
     {
         return $this->belongsToMany(Access::class, 'division_accesses', 'division_id', 'access_id')->withTimestamps();
     }
+
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
 }

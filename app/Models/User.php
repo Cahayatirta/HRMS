@@ -82,6 +82,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Meeting::class, 'meeting_users', 'user_id', 'meeting_id')->withTimestamps();
     }
 
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
+
     public function softCascades()
     {
         return ['employee', 'tasks', 'workhourPlans', 'meetings'];

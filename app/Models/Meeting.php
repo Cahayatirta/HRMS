@@ -21,4 +21,10 @@ class Meeting extends Model
     {
         return $this->belongsToMany(Client::class, 'meeting_clients', 'meeting_id', 'client_id')->withTimestamps();
     }
+
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
 }

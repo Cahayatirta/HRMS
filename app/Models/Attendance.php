@@ -23,4 +23,10 @@ class Attendance extends Model
     {
         return $this->belongsToMany(Task::class, 'attendance_tasks', 'attendance_id', 'task_id')->withTimestamps();
     }
+
+    public function softDelete(Request $request)
+    {
+        $this->is_deleted = true;
+        $this->save();
+    }
 }

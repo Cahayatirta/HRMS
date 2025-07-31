@@ -1,19 +1,18 @@
 <?php
 
-namespace App\Filament\Resources\TaskResource\Pages;
+namespace App\Filament\Resources\ServiceResource\Pages;
 
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\ServiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditTask extends EditRecord
+class EditService extends EditRecord
 {
-    protected static string $resource = TaskResource::class;
+    protected static string $resource = ServiceResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
             Actions\DeleteAction::make()->action(function ($record) {
                     $record->softDelete(request());
                 })

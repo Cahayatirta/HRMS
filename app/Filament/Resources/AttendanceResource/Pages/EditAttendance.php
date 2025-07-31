@@ -13,7 +13,10 @@ class EditAttendance extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()->action(function ($record) {
+                    $record->softDelete(request());
+                })
+                ->requiresConfirmation(),
         ];
     }
 }

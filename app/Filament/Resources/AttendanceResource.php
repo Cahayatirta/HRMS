@@ -16,6 +16,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -81,8 +83,10 @@ class AttendanceResource extends Resource
                 Tables\Columns\ImageColumn::make('image_path'),
                 Tables\Columns\TextColumn::make('task_link')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_deleted')
-                    ->boolean(),
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -93,7 +97,17 @@ class AttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('Deleted Status')
+                    ->options([
+                        'active' => 'Active',
+                        'deleted' => 'Deleted',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if ($data['value'] === 'deleted') {
+                            return $query->where('is_deleted', true);
+                        }
+                        return $query->where('is_deleted', false);
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
