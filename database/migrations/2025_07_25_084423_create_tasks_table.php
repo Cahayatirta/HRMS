@@ -18,9 +18,9 @@ return new class extends Migration
             $table->date('deadline');
             $table->enum('status', ['pending', 'in_progress', 'completed', 'issue', 'cancelled'])->default('pending');
             $table->foreignId('parent_task_id')
+                ->nullable()
                 ->constrained('tasks')
-                ->cascadeOnDelete()
-                ->nullable();
+                ->cascadeOnDelete();
             $table->text('note')->nullable();
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();

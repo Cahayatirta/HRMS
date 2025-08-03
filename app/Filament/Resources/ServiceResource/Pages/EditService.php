@@ -13,10 +13,7 @@ class EditService extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()->action(function ($record) {
-                    $record->softDelete(request());
-                })
-                ->requiresConfirmation(),
+            Actions\DeleteAction::make(),
         ];
     }
 }

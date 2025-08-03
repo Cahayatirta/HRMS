@@ -17,8 +17,10 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\View;
+use Filament\Forms\Components\Repeater;
 
 class TaskResource extends Resource
 {
@@ -27,11 +29,6 @@ class TaskResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-check-circle';
 
     protected static ?string $navigationGroup = 'Project Management';
-
-    public static function canCreate(): bool
-    {
-        return false; // Menonaktifkan tombol create
-    }
 
     public static function form(Form $form): Form
     {
@@ -46,14 +43,57 @@ class TaskResource extends Resource
             DatePicker::make('deadline')
                 ->required(),
 
-            TextInput::make('status')
+            Select::make('status')
+                ->options([
+                    'pending' => 'Pending',
+                    'in_progress' => 'In Progress',
+                    'completed' => 'Completed',
+                    'issue' => 'Issue',
+                    'cancelled' => 'Cancelled',
+                ])
+                ->default('pending')
                 ->required(),
 
             Textarea::make('note')
                 ->columnSpanFull(),
 
-            View::make('components.user-list')
+            Select::make('Users')
+                ->relationship('Users', 'name') 
+                ->multiple()
                 ->label('Assigned Users')
+                ->nullable()
+                ->default(0)
+                ->columnSpanFull(),
+
+            Repeater::make('subtasks')
+                ->relationship('subtasks')
+                ->label('Subtasks')
+                ->schema([
+                    TextInput::make('task_name')
+                        ->required()
+                        ->label('Subtask Name'),
+
+                    Textarea::make('task_description')
+                        ->label('Subtask Description'),
+
+                    DatePicker::make('deadline')
+                        ->label('Subtask Deadline'),
+
+                    Select::make('status')
+                        ->label('Subtask Status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'in_progress' => 'In Progress',
+                            'completed' => 'Completed',
+                            'issue' => 'Issue',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->required(),
+
+                    Textarea::make('note')
+                        ->label('Subtask Note'),
+                ])
                 ->columnSpanFull(),
         ]);
     }
@@ -62,7 +102,7 @@ class TaskResource extends Resource
     {
         return $table
             ->query(Task::query()
-                ->where('parent_task_id', '=', 0)
+                ->where('parent_task_id', '=', null)
                 ->where('is_deleted', '=', 0)
             )
             ->columns([
@@ -113,7 +153,7 @@ class TaskResource extends Resource
                     }),
             ])
             ->actions([
-                // EditAction::make(),
+                EditAction::make(),
                 ViewAction::make(),
             ])
             ->bulkActions([

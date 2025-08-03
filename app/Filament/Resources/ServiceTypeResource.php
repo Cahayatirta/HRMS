@@ -24,13 +24,27 @@ class ServiceTypeResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Select::make('status')
+                    ->required()
+                    ->options([
+                        'active' => 'Active',
+                        'inactive' => 'Inactive',
+                    ])
+                    ->default('active'),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
-                Forms\Components\Toggle::make('is_deleted')
-                    ->required(),
+                // Forms\Components\TextInput::make('fields_')
+                Forms\Components\Repeater::make('fields')
+                    ->relationship('fields')
+                    ->simple(
+                        Forms\Components\TextInput::make('field_name')
+                            ->label('Field Name')
+                            ->required(),
+                    )
+                    ->defaultItems(1)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -42,8 +56,6 @@ class ServiceTypeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_deleted')
-                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

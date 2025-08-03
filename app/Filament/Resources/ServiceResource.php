@@ -5,13 +5,12 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ServiceResource\Pages;
 use App\Filament\Resources\ServiceResource\RelationManagers;
 use App\Models\Service;
+use App\Models\ServiceTypeField;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -21,29 +20,58 @@ class ServiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static ?string $navigationGroup = 'Client And Service Management';    
+    protected static ?string $navigationGroup = 'Client And Service Management';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('client_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('service_type_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('client_id')
+                    // ->relationship('client', 'name')
+                    ->options(\App\Models\Client::all()->pluck('name', 'id'))
+                    ->searchable()
                     ->required(),
+                Forms\Components\Select::make('service_type_id')
+                    // ->relationship('serviceType', 'name')
+                    ->options(\App\Models\ServiceType::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'ongoing' => 'Ongoing',
+                        'expired' => 'Expired',
+                    ])
+                    ->required()
+                    ->default('pending'),
                 Forms\Components\TextInput::make('price')
                     ->required()
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
-                Forms\Components\DateTimePicker::make('start_time'),
-                Forms\Components\DateTimePicker::make('expired_time'),
-                Forms\Components\Toggle::make('is_deleted')
-                    ->required(),
+                    ->prefix('Rp. '),
+                Forms\Components\DateTimePicker::make('start_time')
+                    ->required()
+                    ->default(now()),
+                Forms\Components\DateTimePicker::make('expired_time')
+                    ->required()
+                    ->default(now()->addDays(7)),
+                Forms\Components\Repeater::make('serviceTypeData')
+                    ->relationship('serviceTypeData')
+                    ->schema([
+                        // Forms\Components\Select::make('field_id')
+                        //     ->label('Field')
+                        //     ->relationship('field', 'field_name')
+                        //     ->searchable()
+                        //     ->required(),
+                        Forms\Components\Select::make('field_id')
+                            ->label('Field')
+                            ->options(ServiceTypeField::all()->pluck('field_name', 'id'))
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\TextInput::make('value')->required(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -60,7 +88,7 @@ class ServiceResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
-                    ->money()
+                    ->money('Rp.')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('start_time')
                     ->dateTime()
@@ -68,10 +96,8 @@ class ServiceResource extends Resource
                 Tables\Columns\TextColumn::make('expired_time')
                     ->dateTime()
                     ->sortable(),
-                ToggleColumn::make('is_deleted')
-                    ->label('Deleted')
-                    ->sortable()
-                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_deleted')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -82,17 +108,7 @@ class ServiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('Deleted Status')
-                    ->options([
-                        'active' => 'Active',
-                        'deleted' => 'Deleted',
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        if ($data['value'] === 'deleted') {
-                            return $query->where('is_deleted', true);
-                        }
-                        return $query->where('is_deleted', false);
-                    }),
+                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -15,18 +15,23 @@ class ViewTask extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('viewSubtasks')
-                ->label('Lihat Subtask')
-                ->tooltip(fn ($record) => $record->subtasks()->where('is_delete', 0)->doesntExist() ? 'Subtask tidak ada' : null)
-                // ->disabled(fn ($record) => $record->subtasks()->where('is_delete', 0)->doesntExist())
-                ->modalHeading('Daftar Subtask')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Tutup')
-                ->modalContent(function ($record) {
-                    // Hanya ambil subtasks yang belum dihapus
-                    $subtasks = $record->subtasks()->where('is_delete', 0)->get();
-                    return view('filament.pages.components.subtasks-table', compact('subtasks'));
-                }),
+            // Action::make('viewSubtasks')
+            //     ->label('Lihat Subtask')
+            //     ->tooltip(fn ($record) => $record->subtasks()->where('is_delete', 0)->doesntExist() ? 'Subtask tidak ada' : null)
+            //     // ->disabled(fn ($record) => $record->subtasks()->where('is_delete', 0)->doesntExist())
+            //     ->modalHeading('Daftar Subtask')
+            //     ->modalSubmitAction(false)
+            //     ->modalCancelActionLabel('Tutup')
+            //     ->modalContent(function ($record) {
+            //         // Hanya ambil subtasks yang belum dihapus
+            //         $subtasks = $record->subtasks()->where('is_delete', 0)->get();
+            //         return view('filament.pages.components.subtasks-table', compact('subtasks'));
+            //     }),
+            Action::make('edit')
+                ->label('Edit Task')
+                ->icon('heroicon-o-pencil')
+                ->url(fn () => $this->getResource()::getUrl('edit', ['record' => $this->record])),
+            Actions\DeleteAction::make(),
         ];
     }
 

@@ -24,6 +24,11 @@ class Service extends Model
         return $this->hasMany(ServiceTypeData::class, 'service_id');
     }
 
+    public function serviceType()
+    {
+        return $this->belongsTo(ServiceType::class, 'service_type_id');
+    }
+
     public function softCascades()
     {
         return ['serviceTypeData'];

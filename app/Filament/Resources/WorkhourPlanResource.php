@@ -37,13 +37,17 @@ class WorkhourPlanResource extends Resource
         return $form
             ->schema([
                 Select::make('user_id')
-                    ->relationship('user', 'name')
+                    // ->relationship('user', 'name')
+                    ->options(\App\Models\User::all()->pluck('name', 'id'))
+                    ->searchable()
                     ->required(),
                 DatePicker::make('plan_date')
                     ->required(),
                 TimePicker::make('planned_starttime')
+                    ->seconds(false)
                     ->required(),
                 TimePicker::make('planned_endtime')
+                    ->seconds(false)
                     ->required(),
                 Select::make('work_location')
                     ->options([

@@ -64,9 +64,11 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->disabled(fn (string $context): bool => $context === 'edit'),
                 Select::make('division_id')
+                    // ->relationship('division', 'division_name')
+                    ->options(\App\Models\Division::all()->pluck('division_name', 'id'))
                     ->label('Division')
-                    ->required()
-                    ->relationship('division', 'division_name'),
+                    ->searchable()
+                    ->required(),
                 TextInput::make('full_name')
                     ->required()
                     ->placeholder('Masukkan nama lengkap...'),
