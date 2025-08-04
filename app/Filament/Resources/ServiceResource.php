@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ServiceResource\Pages;
 use App\Filament\Resources\ServiceResource\RelationManagers;
 use App\Models\Service;
+use App\Models\ServiceType;
 use App\Models\ServiceTypeField;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -27,15 +28,29 @@ class ServiceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('client_id')
-                    // ->relationship('client', 'name')
                     ->options(\App\Models\Client::all()->pluck('name', 'id'))
                     ->searchable()
                     ->required(),
                 Forms\Components\Select::make('service_type_id')
-                    // ->relationship('serviceType', 'name')
                     ->options(\App\Models\ServiceType::all()->pluck('name', 'id'))
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                        if ($state) {
+                            $fields = ServiceTypeField::where('service_type_id', $state)->get();
+                            $fieldData = $fields->map(function ($field) {
+                                return [
+                                    'id' => null,
+                                    'field_id' => $field->id,
+                                    'value' => '',
+                                ];
+                            })->toArray();
+                            $set('serviceTypeData', $fieldData);
+                        } else {
+                            $set('serviceTypeData', []);
+                        }
+                    }),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'Pending',
@@ -56,22 +71,28 @@ class ServiceResource extends Resource
                     ->required()
                     ->default(now()->addDays(7)),
                 Forms\Components\Repeater::make('serviceTypeData')
-                    ->relationship('serviceTypeData')
                     ->schema([
-                        // Forms\Components\Select::make('field_id')
-                        //     ->label('Field')
-                        //     ->relationship('field', 'field_name')
-                        //     ->searchable()
-                        //     ->required(),
+                        Forms\Components\Hidden::make('id'),
                         Forms\Components\Select::make('field_id')
                             ->label('Field')
-                            ->options(ServiceTypeField::all()->pluck('field_name', 'id'))
+                            ->options(function (Forms\Get $get) {
+                                $serviceTypeId = $get('../../service_type_id');
+                                if (!$serviceTypeId) {
+                                    return [];
+                                }
+                                $fields = ServiceTypeField::where('service_type_id', $serviceTypeId)
+                                    ->pluck('field_name', 'id');
+                                return $fields;
+                            })
                             ->searchable()
                             ->required(),
                         Forms\Components\TextInput::make('value')->required(),
                     ])
                     ->columns(2)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false),
             ]);
     }
 
