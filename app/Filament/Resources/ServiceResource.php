@@ -79,11 +79,12 @@ class ServiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('client_id')
+                Tables\Columns\TextColumn::make('client.name')
+                    ->label('Client')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('service_type_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('serviceType.name')
+                    ->label('Service Type')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
