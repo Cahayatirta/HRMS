@@ -57,27 +57,24 @@ class EditService extends EditRecord
         $data = $this->form->getState();
         
         if (isset($data['serviceTypeData'])) {
-            // Get all current field IDs for the service type
-            $currentFieldIds = ServiceTypeField::where('service_type_id', $this->record->service_type_id)->pluck('id')->toArray();
-            
-            // Delete data that doesn't belong to current service type
-            $this->record->serviceTypeData()->whereNotIn('field_id', $currentFieldIds)->delete();
-            
             foreach ($data['serviceTypeData'] as $serviceData) {
-                if (isset($serviceData['id']) && $serviceData['id']) {
-                    // Update existing
-                    $this->record->serviceTypeData()->where('id', $serviceData['id'])->update([
-                        'field_id' => $serviceData['field_id'],
-                        'value' => $serviceData['value'],
-                    ]);
+                if (is_array($serviceData)) {
+                    $serviceDataArray = $serviceData;
                 } else {
-                    // Create new
-                    $this->record->serviceTypeData()->create([
-                        'field_id' => $serviceData['field_id'],
-                        'value' => $serviceData['value'],
-                    ]);
+                    $serviceDataArray = (array) $serviceData;
+                }
+                
+                if (!empty($serviceDataArray['field_id'])) {
+                    $this->record->serviceTypeData()->updateOrCreate(
+                        ['field_id' => $serviceDataArray['field_id']],
+                        ['value' => $serviceDataArray['value'] ?? '']
+                    );
                 }
             }
+            
+            // Remove data for fields that no longer exist for this service type
+            $currentFieldIds = collect($data['serviceTypeData'])->pluck('field_id')->filter()->toArray();
+            $this->record->serviceTypeData()->whereNotIn('field_id', $currentFieldIds)->delete();
         }
     }
 }
