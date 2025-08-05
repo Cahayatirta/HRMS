@@ -12,13 +12,13 @@ class WorkhourPlan extends Model
     use HasFactory, SoftDeleteBoolean;
 
     protected $fillable = [
-        'user_id', 'plan_date', 'planned_starttime', 'planned_endtime',
+        'employee_id', 'plan_date', 'planned_starttime', 'planned_endtime',
         'work_location', 'is_deleted'
     ];
 
-    public function user()
+    public function employee()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 
     public function softDelete(Request $request)

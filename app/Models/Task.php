@@ -15,9 +15,9 @@ class Task extends Model
         'parent_task_id', 'note', 'is_deleted'
     ];
 
-    public function users()
+    public function employees()
     {
-        return $this->belongsToMany(User::class, 'user_tasks', 'task_id', 'user_id')->withTimestamps();
+        return $this->belongsToMany(Employee::class, 'employee_tasks', 'task_id', 'employee_id')->withTimestamps();
     }
 
     public function attendances()
@@ -40,10 +40,10 @@ class Task extends Model
         return ['subtasks'];
     }
 
-    public function getUsersListAttribute()
+    public function getEmployeeListAttribute()
     {
-        return $this->users->map(function ($user) {
-            return ['name' => $user->name];
+        return $this->employee->map(function ($employee) {
+            return ['name' => $employee->name];
         });
     }
 

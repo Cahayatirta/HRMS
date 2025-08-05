@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('workhour_plans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
+            $table->foreignId('employee_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('employees')
                 ->cascadeOnDelete();
             $table->date('plan_date');
             $table->time('planned_starttime');

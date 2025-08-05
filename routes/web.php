@@ -19,4 +19,26 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
 
+Route::post('/store-location', function (Request $request) {
+    $request->validate([
+        'latitude' => 'required|numeric',
+        'longitude' => 'required|numeric',
+        'accuracy' => 'nullable|numeric'
+    ]);
+
+    session([
+        'user_location' => [
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'accuracy' => $request->accuracy,
+            'timestamp' => now()
+        ]
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Location stored successfully'
+    ]);
+})->name('store.location');
+
 require __DIR__.'/auth.php';

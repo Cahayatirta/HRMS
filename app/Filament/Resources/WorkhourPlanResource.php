@@ -36,11 +36,12 @@ class WorkhourPlanResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('user_id')
-                    // ->relationship('user', 'name')
-                    ->options(\App\Models\User::all()->pluck('name', 'id'))
+                Select::make('employee_id')
+                    ->relationship('employee', 'full_name')
+                    // ->options(\App\Models\User::all()->pluck('name', 'id'))
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->preload(),
                 DatePicker::make('plan_date')
                     ->required(),
                 TimePicker::make('planned_starttime')
@@ -65,8 +66,8 @@ class WorkhourPlanResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('user.name')
-                    ->label('User')
+                TextColumn::make('employee.full_name')
+                    ->label('Employee')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('plan_date')

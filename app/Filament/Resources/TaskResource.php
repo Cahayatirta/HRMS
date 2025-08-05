@@ -57,13 +57,14 @@ class TaskResource extends Resource
             Textarea::make('note')
                 ->columnSpanFull(),
 
-            Select::make('Users')
-                ->relationship('Users', 'name') 
+            Select::make('Employee')
+                ->relationship('employees', 'full_name') 
                 ->multiple()
-                ->label('Assigned Users')
+                ->label('Assigned Employee')
                 ->nullable()
                 ->default(0)
-                ->columnSpanFull(),
+                ->columnSpanFull()
+                ->preload(),
 
             Repeater::make('subtasks')
                 ->relationship('subtasks')

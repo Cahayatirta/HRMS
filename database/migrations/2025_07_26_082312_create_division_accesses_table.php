@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('access_id')->constrained('accesses')->cascadeOnDelete();
             $table->primary(['division_id', 'access_id']);
             $table->boolean('is_deleted')->default(false);
+            $table->timestamps();
         });
     }
 

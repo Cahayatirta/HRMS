@@ -34,6 +34,16 @@ class Employee extends Model
         return ['attendances'];
     }
 
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'employee_tasks', 'employee_id', 'task_id')->withTimestamps();
+    }
+
+    public function workhourPlans()
+    {
+        return $this->hasMany(WorkhourPlan::class, 'employee_id');
+    }
+
     public function softDelete(Request $request)
     {
         $this->is_deleted = true;

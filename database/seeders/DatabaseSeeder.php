@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             DivisionAccessSeeder::class,
             MeetingUserSeeder::class,
             MeetingClientSeeder::class,
-            UserTaskSeeder::class,
+            EmployeeTaskSeeder::class,
             AttendanceTaskSeeder::class,
             ServiceTypeDataSeeder::class,
         ]);
