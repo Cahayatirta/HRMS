@@ -151,14 +151,14 @@ class AttendanceResource extends Resource
                     ->afterStateUpdated(fn ($state) => logger('Latitude changed:', [$state]))
                     ->disabled()
                     ->dehydrated()
-                    // ->hidden()
+                    ->hidden()
                     ,
                 TextInput::make('longitude')
                     ->reactive()
                     ->afterStateUpdated(fn ($state) => logger('Longitude changed:', [$state]))
                     ->disabled()
                     ->dehydrated()
-                    // ->hidden()
+                    ->hidden()
                     ,
                 FileUpload::make('image_path')
                     ->image(),
@@ -166,55 +166,51 @@ class AttendanceResource extends Resource
                 Hidden::make('is_in_office_radius')->default(false),
                 
                 // Repeater for completed tasks
-                Repeater::make('completedTasks')
+                Select::make('completed_task_ids')
                     ->label('Completed Tasks')
-                    ->schema([
-                        Hidden::make('attendance_task_id'),
-                        Select::make('task_id')
-                            ->label('Task')
-                            ->options(function (Forms\Get $get, $livewire) {
-                                $employeeId = $get('../../employee_id');
-                                // $employeeId = $livewire->employee_id;
-                                // if($employeeId) {
-                                //     return [$employeeId];
-                                // }
-                                if (!$employeeId) {
-                                    return [];
-                                }
-                                
-                                $tasks = Task::whereHas('employees', function ($query) use ($employeeId) {
-                                    $query->where('employee_id', $employeeId);
-                                })
-                                ->where('status', 'completed')
-                                ->pluck('task_name', 'id');
-                                
-                                return $tasks;
+                    ->multiple()
+                    ->options(function (Forms\Get $get) {
+                        $employeeId = $get('employee_id');
+
+                        if (!$employeeId) {
+                            return [];
+                        }
+
+                        $today = now()->format('Y-m-d');
+
+                        $tasks = Task::whereHas('employees', function ($query) use ($employeeId) {
+                                $query->where('employee_id', $employeeId);
                             })
-                            ->searchable()
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                if ($state) {
-                                    $task = Task::find($state);
-                                    if ($task) {
-                                        $set('task_info', $task->task_description ?? 'No description');
-                                    }
-                                }
-                            }),
-                        Forms\Components\Textarea::make('task_info')
-                            ->label('Task Description')
-                            ->disabled()
-                            ->rows(2),
-                    ])
-                    ->columns(1)
+                            ->where('status', 'completed')
+                            ->whereDate('updated_at', $today)
+                            ->pluck('task_name', 'id');
+
+                            // dd($tasks);
+                        if ($tasks->isEmpty()) {
+                            return ['__no_tasks__' => 'No Completed Task Today'];
+                        }
+
+                        return $tasks;
+                    })
+                    ->placeholder('Select completed tasks...')
+                    ->disabled(fn (Forms\Get $get) =>
+                        $get('employee_id') === null)
+                    ->reactive()
+                    // ->required(fn (Forms\Get $get) =>
+                    //     $get('employee_id') !== null
+                    // )
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if (is_array($state) && in_array('__no_tasks__', $state)) {
+                            // Hapus nilai dummy dari array
+                            $filtered = array_filter($state, fn ($id) => $id !== '__no_tasks__');
+                            $set('completed_task_ids', $filtered);
+                        }
+                    })
+                    ->hint('Only shows tasks completed today')
                     ->columnSpanFull()
-                    ->addable(true)
-                    ->deletable(true)
-                    ->reorderable(false)
-                    ->collapsed()
-                    ->itemLabel(fn (array $state): ?string => 
-                        $state['task_id'] ? Task::find($state['task_id'])?->task_name : 'New Task'
-                    ),
+                    ->extraAttributes([
+                        'title' => 'Only shows tasks completed today. Select employee first.',
+                    ]),
             ]);
     }
 
