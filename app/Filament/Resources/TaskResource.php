@@ -74,8 +74,13 @@ class TaskResource extends Resource
                         ->required()
                         ->label('Subtask Name'),
 
-                    Textarea::make('task_description')
-                        ->label('Subtask Description'),
+                    Select::make('Employee')
+                        ->relationship('employees', 'full_name') 
+                        ->multiple()
+                        ->label('Assigned Employee')
+                        ->nullable()
+                        ->default(0)
+                        ->preload(),
 
                     DatePicker::make('deadline')
                         ->label('Subtask Deadline'),
@@ -94,7 +99,12 @@ class TaskResource extends Resource
 
                     Textarea::make('note')
                         ->label('Subtask Note'),
+
+                    Textarea::make('task_description')
+                        ->label('Subtask Description'),
+
                 ])
+                ->columns(2)
                 ->columnSpanFull(),
         ]);
     }
