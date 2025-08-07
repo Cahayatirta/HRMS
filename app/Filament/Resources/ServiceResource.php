@@ -2,18 +2,44 @@
 
 namespace App\Filament\Resources;
 
+// Resources & Pages
 use App\Filament\Resources\ServiceResource\Pages;
+use App\Filament\Resources\ServiceResource\Pages\ListServices;
+use App\Filament\Resources\ServiceResource\Pages\CreateService;
+use App\Filament\Resources\ServiceResource\Pages\EditService;
 use App\Filament\Resources\ServiceResource\RelationManagers;
+
+// Models
+use App\Models\Client;
 use App\Models\Service;
 use App\Models\ServiceType;
 use App\Models\ServiceTypeField;
+
+// Filament Resource
+use Filament\Resources\Resource;
+
+// Filament Forms
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+
+// Filament Tables
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+
+// Eloquent
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
 
 class ServiceResource extends Resource
 {
@@ -27,12 +53,12 @@ class ServiceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('client_id')
-                    ->options(\App\Models\Client::all()->pluck('name', 'id'))
+                Select::make('client_id')
+                    ->options(Client::all()->pluck('name', 'id'))
                     ->searchable()
                     ->required(),
-                Forms\Components\Select::make('service_type_id')
-                    ->options(\App\Models\ServiceType::all()->pluck('name', 'id'))
+                Select::make('service_type_id')
+                    ->options(ServiceType::all()->pluck('name', 'id'))
                     ->searchable()
                     ->required()
                     ->live()
@@ -51,7 +77,7 @@ class ServiceResource extends Resource
                             $set('serviceTypeData', []);
                         }
                     }),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->options([
                         'pending' => 'Pending',
                         'ongoing' => 'Ongoing',
@@ -59,21 +85,21 @@ class ServiceResource extends Resource
                     ])
                     ->required()
                     ->default('pending'),
-                Forms\Components\TextInput::make('price')
+                TextInput::make('price')
                     ->required()
                     ->numeric()
                     ->default(0)
                     ->prefix('Rp. '),
-                Forms\Components\DateTimePicker::make('start_time')
+                DateTimePicker::make('start_time')
                     ->required()
                     ->default(now()),
-                Forms\Components\DateTimePicker::make('expired_time')
+                DateTimePicker::make('expired_time')
                     ->required()
                     ->default(now()->addDays(7)),
-                Forms\Components\Repeater::make('serviceTypeData')
+                Repeater::make('serviceTypeData')
                     ->schema([
-                        Forms\Components\Hidden::make('id'),
-                        Forms\Components\Select::make('field_id')
+                        Hidden::make('id'),
+                        Select::make('field_id')
                             ->label('Field')
                             ->options(function (Forms\Get $get) {
                                 $serviceTypeId = $get('../../service_type_id');
@@ -86,7 +112,7 @@ class ServiceResource extends Resource
                             })
                             ->searchable()
                             ->required(),
-                        Forms\Components\TextInput::make('value')->required(),
+                        TextInput::make('value')->required(),
                     ])
                     ->columns(2)
                     ->columnSpanFull()
@@ -100,31 +126,33 @@ class ServiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('client.name')
+                TextColumn::make('client.name')
                     ->label('Client')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('serviceType.name')
+                TextColumn::make('serviceType.name')
                     ->label('Service Type')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->money('Rp.')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time')
+                TextColumn::make('start_time')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('expired_time')
+                TextColumn::make('expired_time')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_deleted')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                ToggleColumn::make('is_deleted')
+                    ->label('Deleted')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -133,11 +161,11 @@ class ServiceResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -152,9 +180,9 @@ class ServiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListServices::route('/'),
-            'create' => Pages\CreateService::route('/create'),
-            'edit' => Pages\EditService::route('/{record}/edit'),
+            'index' => ListServices::route('/'),
+            'create' => CreateService::route('/create'),
+            'edit' => EditService::route('/{record}/edit'),
         ];
     }
 }

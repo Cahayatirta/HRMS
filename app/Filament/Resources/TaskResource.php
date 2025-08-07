@@ -2,25 +2,45 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TaskResource\Pages;
+// Model
 use App\Models\Task;
-use Filament\Forms\Form;
+
+// Filament Resource
 use Filament\Resources\Resource;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+
+// Filament Resource Pages
+use App\Filament\Resources\TaskResource\Pages;
+use App\Filament\Resources\TaskResource\Pages\ListTasks;
+use App\Filament\Resources\TaskResource\Pages\ViewTask;
+use App\Filament\Resources\TaskResource\Pages\EditTask;
+use App\Filament\Resources\TaskResource\Pages\CreateTask;
+
+// Filament Tables - Columns
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Columns\ImageColumn;
+
+// Filament Tables - Actions
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Columns\ToggleColumn;
+
+// Filament Tables - Filters
 use Filament\Tables\Filters\SelectFilter;
+
+// Filament Forms - Components
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\View;
 use Filament\Forms\Components\Repeater;
+
+// Laravel
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskResource extends Resource
 {
@@ -135,6 +155,10 @@ class TaskResource extends Resource
                         default => 'gray',
                     }),
 
+                ImageColumn::make('employees.image_path')
+                    ->circular()
+                    ->stacked(),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -148,7 +172,7 @@ class TaskResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('Deleted Status')
@@ -184,9 +208,9 @@ class TaskResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTasks::route('/'),
-            'view' => Pages\ViewTask::route('/{record}'),
-            'edit' => Pages\EditTask::route('/{record}/edit'),
+            'index' => ListTasks::route('/'),
+            'view' => ViewTask::route('/{record}'),
+            'edit' => EditTask::route('/{record}/edit'),
         ];
     }
 }

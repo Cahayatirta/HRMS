@@ -2,27 +2,51 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\WorkhourPlanResource\Pages;
-use App\Filament\Resources\WorkhourPlanResource\RelationManagers;
+// Model
 use App\Models\WorkhourPlan;
-use Filament\Forms;
-use Filament\Forms\Form;
+
+// Filament Resource
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Tables\Actions\EditAction;
+
+// Filament Resource Pages
+use App\Filament\Resources\WorkhourPlanResource\Pages;
+use App\Filament\Resources\WorkhourPlanResource\Pages\ListWorkhourPlans;
+use App\Filament\Resources\WorkhourPlanResource\Pages\CreateWorkhourPlan;
+use App\Filament\Resources\WorkhourPlanResource\Pages\EditWorkhourPlan;
+
+// Filament Resource Relation Managers
+use App\Filament\Resources\WorkhourPlanResource\RelationManagers;
+
+// Filament Tables - Columns
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ToggleColumn;
+
+// Filament Tables - Actions
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+
+// Filament Tables - Filters
 use Filament\Tables\Filters\SelectFilter;
+
+// Filament Forms - Components
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
+
+// Laravel
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+// Opsional (tidak dipakai langsung, bisa dihapus jika tidak digunakan)
+use Filament\Forms;
+use Filament\Tables;
 
 class WorkhourPlanResource extends Resource
 {
@@ -81,7 +105,7 @@ class WorkhourPlanResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -109,8 +133,8 @@ class WorkhourPlanResource extends Resource
                 EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
             // ->tabs([
@@ -129,9 +153,9 @@ class WorkhourPlanResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWorkhourPlans::route('/'),
-            'create' => Pages\CreateWorkhourPlan::route('/create'),
-            'edit' => Pages\EditWorkhourPlan::route('/{record}/edit'),
+            'index' => ListWorkhourPlans::route('/'),
+            'create' => CreateWorkhourPlan::route('/create'),
+            'edit' => EditWorkhourPlan::route('/{record}/edit'),
         ];
     }
 }

@@ -2,28 +2,49 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AttendanceResource\Pages;
-use App\Filament\Resources\AttendanceResource\RelationManagers;
-use App\Models\Attendance;
-use App\Models\Task;
+// Laravel - Eloquent
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+// Filament - Core
+use Filament\Resources\Resource;
+
+// Filament - Forms
 use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Forms\ComponentContainer;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+
+// Filament - Tables
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+// App - Filament Resources
+use App\Filament\Resources\AttendanceResource\Pages;
+use App\Filament\Resources\AttendanceResource\Pages\ListAttendances;
+use App\Filament\Resources\AttendanceResource\Pages\CreateAttendance;
+use App\Filament\Resources\AttendanceResource\Pages\EditAttendance;
+use App\Filament\Resources\AttendanceResource\RelationManagers;
+
+// App - Models
+use App\Models\Attendance;
+use App\Models\Task;
+
 
 class AttendanceResource extends Resource
 {
@@ -218,15 +239,19 @@ class AttendanceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.full_name')
+                ImageColumn::make('image_path')
+                    ->label('Image')
+                    ->circular()
+                    ->toggleable(),
+                TextColumn::make('employee.full_name')
                     ->label('Employee')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('start_time')
+                TextColumn::make('start_time')
                     ->label('Start Time'),
-                Tables\Columns\TextColumn::make('end_time')
+                TextColumn::make('end_time')
                     ->label('End Time'),
-                Tables\Columns\TextColumn::make('work_location')
+                TextColumn::make('work_location')
                     ->label('Work Location')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -235,23 +260,20 @@ class AttendanceResource extends Resource
                         default => 'gray',
                     })
                     ->searchable(),
-                Tables\Columns\TextColumn::make('longitude')
+                TextColumn::make('longitude')
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('latitude')
+                TextColumn::make('latitude')
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\ImageColumn::make('image_path')
-                    ->label('Image')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('task_link')
+                TextColumn::make('task_link')
                     ->label('Task Link')
                     ->searchable()
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('attendanceTasks.task.task_name')
+                TextColumn::make('attendanceTasks.task.task_name')
                     ->label('Completed Tasks')
                     ->badge()
                     ->separator(',')
@@ -260,12 +282,12 @@ class AttendanceResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -289,12 +311,12 @@ class AttendanceResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -309,9 +331,9 @@ class AttendanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAttendances::route('/'),
-            'create' => Pages\CreateAttendance::route('/create'),
-            'edit' => Pages\EditAttendance::route('/{record}/edit'),
+            'index' => ListAttendances::route('/'),
+            'create' => CreateAttendance::route('/create'),
+            'edit' => EditAttendance::route('/{record}/edit'),
         ];
     }
 }

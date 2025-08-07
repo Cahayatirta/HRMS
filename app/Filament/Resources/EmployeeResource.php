@@ -2,17 +2,32 @@
 
 namespace App\Filament\Resources;
 
+// App - Resources
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
+use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
+use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+
+// App - Models
 use App\Models\Employee;
 use App\Models\User;
+
+// Fillament - Core
+use Filament\Resources\Resource;
+
+// Fillament - Forms
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\FileUpload;
+
+// Fillament - Tables
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\IconColumn;
@@ -22,11 +37,11 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\FileUpload;
+
+// Laravel
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
 
 class EmployeeResource extends Resource
 {
@@ -124,7 +139,7 @@ class EmployeeResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('Deleted Status')
@@ -160,9 +175,9 @@ class EmployeeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployees::route('/'),
-            'create' => Pages\CreateEmployee::route('/create'),
-            'edit' => Pages\EditEmployee::route('/{record}/edit'),
+            'index' => ListEmployees::route('/'),
+            'create' => CreateEmployee::route('/create'),
+            'edit' => EditEmployee::route('/{record}/edit'),
         ];
     }
 }

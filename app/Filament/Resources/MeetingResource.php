@@ -2,16 +2,38 @@
 
 namespace App\Filament\Resources;
 
+// Resource & Pages
 use App\Filament\Resources\MeetingResource\Pages;
+use App\Filament\Resources\MeetingResource\Pages\ListMeetings;
+use App\Filament\Resources\MeetingResource\Pages\CreateMeeting;
+use App\Filament\Resources\MeetingResource\Pages\EditMeeting;
 use App\Filament\Resources\MeetingResource\RelationManagers;
+
+// Models
 use App\Models\Meeting;
+
+// Filament Resource
+use Filament\Resources\Resource;
+
+// Filament Forms
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\DatePicker;
+
+// Filament Tables
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+
+// Eloquent
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -27,17 +49,17 @@ class MeetingResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('meeting_title')
+                TextInput::make('meeting_title')
                     ->required(),
-                Forms\Components\Textarea::make('meeting_note')
+                Textarea::make('meeting_note')
                     ->columnSpanFull(),
-                Forms\Components\DatePicker::make('date')
+                DatePicker::make('date')
                     ->required(),
-                Forms\Components\TextInput::make('start_time')
+                TextInput::make('start_time')
                     ->required(),
-                Forms\Components\TextInput::make('end_time')
+                TextInput::make('end_time')
                     ->required(),
-                Forms\Components\Toggle::make('is_deleted')
+                Toggle::make('is_deleted')
                     ->required(),
             ]);
     }
@@ -46,22 +68,22 @@ class MeetingResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('meeting_title')
+                TextColumn::make('meeting_title')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time'),
-                Tables\Columns\TextColumn::make('end_time'),
+                TextColumn::make('start_time'),
+                TextColumn::make('end_time'),
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -80,11 +102,11 @@ class MeetingResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -99,9 +121,9 @@ class MeetingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMeetings::route('/'),
-            'create' => Pages\CreateMeeting::route('/create'),
-            'edit' => Pages\EditMeeting::route('/{record}/edit'),
+            'index' => ListMeetings::route('/'),
+            'create' => CreateMeeting::route('/create'),
+            'edit' => EditMeeting::route('/{record}/edit'),
         ];
     }
 }

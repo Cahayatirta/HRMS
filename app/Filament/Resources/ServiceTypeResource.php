@@ -2,14 +2,33 @@
 
 namespace App\Filament\Resources;
 
+// Resources & Pages
 use App\Filament\Resources\ServiceTypeResource\Pages;
+use App\Filament\Resources\ServiceTypeResource\Pages\CreateServiceType;
+use App\Filament\Resources\ServiceTypeResource\Pages\EditServiceType;
+use App\Filament\Resources\ServiceTypeResource\Pages\ListServiceTypes;
 use App\Filament\Resources\ServiceTypeResource\RelationManagers;
+
+// Models
 use App\Models\ServiceType;
+
+// Filament Resource
+use Filament\Resources\Resource;
+
+// Filament Forms
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\TextInput;
+
+// Filament Tables
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+
+// Eloquent
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -25,23 +44,22 @@ class ServiceTypeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->required()
                     ->options([
                         'active' => 'Active',
                         'inactive' => 'Inactive',
                     ])
                     ->default('active'),
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->columnSpanFull(),
-                // Forms\Components\TextInput::make('fields_')
-                Forms\Components\Repeater::make('fields')
+                Repeater::make('fields')
                     ->relationship('fields')
                     ->simple(
-                        Forms\Components\TextInput::make('field_name')
+                        TextInput::make('field_name')
                             ->label('Field Name')
                             ->required(),
                     )
@@ -54,15 +72,15 @@ class ServiceTypeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -90,9 +108,9 @@ class ServiceTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListServiceTypes::route('/'),
-            'create' => Pages\CreateServiceType::route('/create'),
-            'edit' => Pages\EditServiceType::route('/{record}/edit'),
+            'index' => ListServiceTypes::route('/'),
+            'create' => CreateServiceType::route('/create'),
+            'edit' => EditServiceType::route('/{record}/edit'),
         ];
     }
 }

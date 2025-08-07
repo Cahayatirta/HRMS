@@ -2,31 +2,44 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DivisionResource\Pages;
-use App\Filament\Resources\DivisionResource\RelationManagers;
-use App\Models\Division;
-use App\Models\Access;
-use App\Models\DivisionAccess;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
+// Laravel - Eloquent
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
+
+// Filament - Core
+use Filament\Resources\Resource;
+
+// Filament - Forms
+use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 
+// Filament - Tables
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+
+// App - Models
+use App\Models\Access;
+use App\Models\Division;
+use App\Models\DivisionAccess;
+
+// App - Filament Resources
+use App\Filament\Resources\DivisionResource\Pages;
+use App\Filament\Resources\DivisionResource\Pages\CreateDivision;
+use App\Filament\Resources\DivisionResource\Pages\EditDivision;
+use App\Filament\Resources\DivisionResource\Pages\ListDivisions;
+use App\Filament\Resources\DivisionResource\RelationManagers;
 
 class DivisionResource extends Resource
 {
@@ -223,6 +236,8 @@ class DivisionResource extends Resource
                             // ->preload()
                             ->placeholder('Select access permissions')
                             ->helperText('Select CRUD operations for access management'),
+
+                        
                     ]),
             ]);
     }
@@ -249,6 +264,9 @@ class DivisionResource extends Resource
                 TextColumn::make('required_workhours')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('accesses_count')
+                    ->label('Jumlah Akses')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -260,7 +278,7 @@ class DivisionResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('Deleted Status')
@@ -295,9 +313,15 @@ class DivisionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDivisions::route('/'),
-            'create' => Pages\CreateDivision::route('/create'),
-            'edit' => Pages\EditDivision::route('/{record}/edit'),
+            'index' => ListDivisions::route('/'),
+            'create' => CreateDivision::route('/create'),
+            'edit' => EditDivision::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withCount('accesses'); // ← Wajib untuk akses jumlah akses
     }
 }

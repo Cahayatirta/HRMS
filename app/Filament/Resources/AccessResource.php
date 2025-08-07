@@ -2,19 +2,38 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AccessResource\Pages;
-use App\Filament\Resources\AccessResource\RelationManagers;
-use App\Models\Access;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
+// Laravel
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+// Filament - Core
+use Filament\Resources\Resource;
+
+// Filament - Forms
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+
+// Filament - Tables
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Filters\SelectFilter;
+
+// App - Resources
+use App\Filament\Resources\AccessResource\Pages;
+use App\Filament\Resources\AccessResource\Pages\ListAccesses;
+use App\Filament\Resources\AccessResource\Pages\CreateAccess;
+use App\Filament\Resources\AccessResource\Pages\EditAccess;
+use App\Filament\Resources\AccessResource\RelationManagers;
+
+// App - Models
+use App\Models\Access;
 
 class AccessResource extends Resource
 {
@@ -30,11 +49,11 @@ class AccessResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('access_name')
+                TextInput::make('access_name')
                     ->required(),
-                Forms\Components\TextInput::make('access_description'),
-                Forms\Components\Toggle::make('is_deleted')
-                    ->required(),
+                TextInput::make('access_description'),
+                Toggle::make('is_deleted')
+                    ->hidden(),
             ]);
     }
 
@@ -49,7 +68,7 @@ class AccessResource extends Resource
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -73,11 +92,11 @@ class AccessResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -92,9 +111,9 @@ class AccessResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAccesses::route('/'),
-            'create' => Pages\CreateAccess::route('/create'),
-            'edit' => Pages\EditAccess::route('/{record}/edit'),
+            'index' => ListAccesses::route('/'),
+            'create' => CreateAccess::route('/create'),
+            'edit' => EditAccess::route('/{record}/edit'),
         ];
     }
 }
