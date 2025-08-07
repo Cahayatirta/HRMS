@@ -12,11 +12,11 @@ class EditDivision extends EditRecord
 
     protected array $accessCategories = [
         'client_access',
-        'service_access',
+        'service_access', 
         'service_type_access',
         'division_access',
         'employee_access',
-        'Workhour_plan_access',
+        'workhour_plan_access', // Fixed: consistent naming
         'attendance_access',
         'metting_access',
         'task_access',
@@ -24,32 +24,61 @@ class EditDivision extends EditRecord
         'access_access',
     ];
 
+    // Mapping untuk matching yang lebih akurat
+    protected array $accessMapping = [
+        'client_access' => ['client'],
+        'service_access' => ['service'], // Exact match, tidak termasuk "service type"
+        'service_type_access' => ['service type'],
+        'division_access' => ['division'],
+        'employee_access' => ['employee'],
+        'workhour_plan_access' => ['workhour plan'],
+        'attendance_access' => ['attendance'],
+        'metting_access' => ['metting'],
+        'task_access' => ['task'],
+        'user_access' => ['user'],
+        'access_access' => ['access'],
+    ];
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Ambil semua access yang terkait dengan division ini (langsung objeknya)
-        $accesses = $this->record->accesses()->get(); // Ini ambil relasi Access
+        // Ambil semua access yang terkait dengan division ini
+        $accesses = $this->record->accesses()->get();
 
         // Inisialisasi data default
         foreach ($this->accessCategories as $category) {
             $data[$category] = [];
         }
-        
-        // Bagi access berdasarkan prefix
+
+        // Bagi access berdasarkan mapping yang lebih spesifik
         foreach ($accesses as $access) {
-            foreach ($this->accessCategories as $category) {
-                $prefix = str_replace('_access', '', $category); // Misal: 'client'
-                
-                
-                if (str_starts_with($access->name, $prefix . '.')) {
-                    $data[$category][] = $access->id;
-                    break;
+            $accessNameLower = strtolower($access->access_name);
+            
+            foreach ($this->accessMapping as $category => $keywords) {
+                foreach ($keywords as $keyword) {
+                    // Menggunakan strategi matching yang lebih spesifik
+                    if ($this->isAccessMatch($accessNameLower, strtolower($keyword))) {
+                        $data[$category][] = $access->id;
+                        break 2; // Break both loops setelah match
+                    }
                 }
             }
         }
-        
-        dd($data);
 
         return $data;
+    }
+
+    /**
+     * Fungsi untuk matching access yang lebih akurat
+     */
+    private function isAccessMatch(string $accessName, string $keyword): bool
+    {
+        // Untuk "service" - pastikan bukan "service type" 
+        if ($keyword === 'service') {
+            return str_contains($accessName, 'service') && !str_contains($accessName, 'service type');
+        }
+        
+        // Untuk keyword lainnya, gunakan contains biasa
+        return str_contains($accessName, $keyword);
     }
 
     protected function mutateFormDataBeforeSave(array $data): array

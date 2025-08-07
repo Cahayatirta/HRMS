@@ -129,7 +129,7 @@ class DivisionResource extends Resource
                             ->helperText('Select CRUD operations for employee management'),
                         
                         // workhour plan Access
-                        Select::make('Workhour_plan_access')
+                        Select::make('workhour_plan_access')
                             ->label('Workhour Plan Access')
                             ->multiple()
                             ->options(function () {
