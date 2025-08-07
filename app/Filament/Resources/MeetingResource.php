@@ -22,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\TextArea;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 
 // Filament Tables
 use Filament\Tables;
@@ -51,16 +52,30 @@ class MeetingResource extends Resource
             ->schema([
                 TextInput::make('meeting_title')
                     ->required(),
-                Textarea::make('meeting_note')
-                    ->columnSpanFull(),
                 DatePicker::make('date')
                     ->required(),
+                Textarea::make('meeting_note')
+                    ->columnSpanFull(),
                 TextInput::make('start_time')
                     ->required(),
                 TextInput::make('end_time')
                     ->required(),
                 Toggle::make('is_deleted')
-                    ->required(),
+                    ->hidden(),
+                Select::make('users')
+                    ->relationship('users', 'name') 
+                    ->multiple()
+                    ->label('Assigned Users')
+                    ->nullable()
+                    ->default(0)
+                    ->preload(),
+                Select::make('clients')
+                    ->relationship('clients', 'name') 
+                    ->multiple()
+                    ->label('Assigned clients')
+                    ->nullable()
+                    ->default(0)
+                    ->preload(),
             ]);
     }
 
