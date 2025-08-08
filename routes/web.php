@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\AbsenController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,5 +41,8 @@ Route::post('/store-location', function (Request $request) {
         'message' => 'Location stored successfully'
     ]);
 })->name('store.location');
+
+Route::post('/absen/masuk', [AbsenController::class, 'masuk'])->name('absen.masuk');
+Route::post('/absen/keluar', [AbsenController::class, 'keluar'])->name('absen.keluar');
 
 require __DIR__.'/auth.php';
