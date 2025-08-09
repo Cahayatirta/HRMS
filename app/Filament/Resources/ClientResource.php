@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 // Laravel - Eloquent
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Crypt;
 
 // Filament - Core
 use Filament\Resources\Resource;
@@ -14,6 +15,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Repeater;
 
 // Filament - Tables
 use Filament\Tables;
@@ -59,6 +61,31 @@ class ClientResource extends Resource
                     ->required(),
                 TextInput::make('address')
                     ->required(),
+                Repeater::make('clientData')
+                    ->relationship('clientData')
+                    ->label('Data Client')
+                    ->schema([
+                        TextInput::make('account_type')
+                            ->required()
+                            ->label('Account Type'),
+                        TextInput::make('account_credential')
+                            ->required()
+                            ->label('Account Credential'),
+                        TextInput::make('account_password')
+                            ->label('Account Password')
+                            ->afterStateHydrated(function ($component, $state) {
+                                try {
+                                    $component->state(Crypt::decryptString($state));
+                                } catch (\Exception $e) {
+                                    $component->state($state); // fallback kalau gagal decrypt
+                                }
+                            })
+                            ->dehydrateStateUsing(fn ($state) => Crypt::encryptString($state))
+                            ->password()
+                            ->revealable()
+                            ->required(),
+                    ])
+                    ->columnSpanFull()
             ]);
     }
 

@@ -27,6 +27,11 @@ class Client extends Model
         return ['services'];
     }
 
+    public function clientData()
+    {
+        return $this->hasMany(ClientData::class, 'client_id');
+    }
+
     public function softDelete(Request $request)
     {
         $this->is_deleted = true;
