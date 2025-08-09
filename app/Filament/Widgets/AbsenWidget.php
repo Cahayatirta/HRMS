@@ -23,8 +23,6 @@ class AbsenWidget extends Widget implements HasForms
     use InteractsWithForms;
 
     protected static string $view = 'filament.widgets.absen-widget';
-
-    // protected static ?string $pollingInterval = '1'; 
     
     protected int | string | array $columnSpan = 'full';
     
@@ -52,22 +50,12 @@ class AbsenWidget extends Widget implements HasForms
                 ->orderBy('created_at', 'desc')
                 ->first();
             
-            if ($this->todayAttendance) {
-                if ($this->todayAttendance->end_time === null) {
-                    $this->attendanceType = 'check_out';
-                } else {
-                    // Check total work hours including all sessions today
-                    $requiredHours = $employee->division->required_workhours ?? 8;
-                    $totalTodayHours = $this->getTodayTotalWorkHours($employee);
-                    
-                    if ($totalTodayHours >= $requiredHours) {
-                        $this->attendanceType = 'completed';
-                    } else {
-                        // Allow additional check-in if hours not met
-                        $this->attendanceType = 'additional_check_in';
-                    }
-                }
+            if ($this->todayAttendance && $this->todayAttendance->end_time === null) {
+                // Currently checked in
+                $this->attendanceType = 'check_out';
             } else {
+                // Either no attendance today or already checked out
+                // Always allow check-in regardless of hours worked
                 $this->attendanceType = 'check_in';
             }
         }
@@ -105,7 +93,7 @@ class AbsenWidget extends Widget implements HasForms
                     ])
                     ->required()
                     ->reactive()
-                    ->visible(fn () => in_array($this->attendanceType, ['check_in', 'additional_check_in']))
+                    ->visible(fn () => $this->attendanceType === 'check_in')
                     ->afterStateUpdated(function ($state, $set) {
                         if ($state === 'office') {
                             $this->handleOfficeLocation($set);
@@ -123,7 +111,7 @@ class AbsenWidget extends Widget implements HasForms
                     ->visibility('private')
                     ->required()
                     ->visible(fn (Forms\Get $get) => 
-                        in_array($this->attendanceType, ['check_in', 'additional_check_in']) && $get('work_location') === 'anywhere'
+                        $this->attendanceType === 'check_in' && $get('work_location') === 'anywhere'
                     ),
 
                 Hidden::make('latitude'),
@@ -288,14 +276,35 @@ class AbsenWidget extends Widget implements HasForms
                 'image_path' => $data['image_path'] ?? null,
             ]);
 
-            Notification::make()
-                ->title('Check-in Successful')
-                ->body('You have successfully checked in at ' . now()->format('H:i'))
-                ->success()
-                ->send();
+            // Get required hours and total worked hours
+            $requiredHours = $employee->division->required_workhours ?? 8;
+            $totalTodayHours = $this->getTodayTotalWorkHours($employee);
+            
+            // Determine notification message based on current work hours
+            if ($totalTodayHours >= $requiredHours) {
+                Notification::make()
+                    ->title('Check-in Successful')
+                    ->body('You have successfully checked in at ' . now()->format('H:i') . '. You have already worked ' . number_format($totalTodayHours, 1) . 'h today (Required: ' . $requiredHours . 'h)')
+                    ->success()
+                    ->send();
+            } elseif ($totalTodayHours > 0) {
+                $remainingHours = $requiredHours - $totalTodayHours;
+                Notification::make()
+                    ->title('Check-in Successful')
+                    ->body('You have successfully checked in at ' . now()->format('H:i') . '. You have worked ' . number_format($totalTodayHours, 1) . 'h today, need ' . number_format($remainingHours, 1) . 'h more (Required: ' . $requiredHours . 'h)')
+                    ->success()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Check-in Successful')
+                    ->body('You have successfully checked in at ' . now()->format('H:i') . '. Required work hours: ' . $requiredHours . 'h')
+                    ->success()
+                    ->send();
+            }
 
             $this->checkTodayAttendance();
             $this->form->fill();
+            $this->dispatch('attendance-updated');
 
         } catch (\Exception $e) {
             Notification::make()
@@ -333,20 +342,21 @@ class AbsenWidget extends Widget implements HasForms
             
             // Get total work hours including previous sessions today
             $totalTodayHours = $this->getTodayTotalWorkHours($employee) + $currentSessionHours;
-            
-            // Check if work hours meet requirement
-            if ($totalTodayHours < $requiredHours) {
-                $remainingHours = $requiredHours - $totalTodayHours;
+
+            $minimumPerSession = $requiredHours / 2;
+
+            if ($totalTodayHours < $minimumPerSession) {
+                $remainingHours = $minimumPerSession - $totalTodayHours;
                 
                 Notification::make()
                     ->title('Insufficient Work Hours')
-                    ->body("You need to work " . number_format($remainingHours, 1) . " more hours. Required: {$requiredHours}h, Current: " . number_format($totalTodayHours, 1) . "h")
+                    ->body("You need to work " . number_format($remainingHours, 1) . " more hours. Each work session must be at least {$minimumPerSession} hours.")
                     ->warning()
                     ->send();
                 return;
             }
 
-            // Update attendance with end time
+            // Update attendance with end time (always allow checkout)
             $this->todayAttendance->update([
                 'end_time' => now()->format('H:i:s'),
                 'task_link' => $data['task_link'] ?? null,
@@ -364,85 +374,29 @@ class AbsenWidget extends Widget implements HasForms
                 }
             }
 
-            Notification::make()
-                ->title('Check-out Successful')
-                ->body('You have successfully checked out at ' . now()->format('H:i') . '. Total work: ' . number_format($totalTodayHours, 1) . 'h')
-                ->success()
-                ->send();
+            // Determine notification message based on work hours
+            if ($totalTodayHours >= $requiredHours) {
+                Notification::make()
+                    ->title('Check-out Successful')
+                    ->body('You have successfully checked out at ' . now()->format('H:i') . '. Total work today: ' . number_format($totalTodayHours, 1) . 'h (Required: ' . $requiredHours . 'h) ✓')
+                    ->success()
+                    ->send();
+            } else {
+                $remainingHours = $requiredHours - $totalTodayHours;
+                Notification::make()
+                    ->title('Check-out Successful')
+                    ->body('You have successfully checked out at ' . now()->format('H:i') . '. Total work today: ' . number_format($totalTodayHours, 1) . 'h (Required: ' . $requiredHours . 'h). You can check-in again to complete remaining ' . number_format($remainingHours, 1) . 'h')
+                    ->warning()
+                    ->send();
+            }
 
             $this->checkTodayAttendance();
             $this->form->fill();
+            $this->dispatch('attendance-updated');
 
         } catch (\Exception $e) {
             Notification::make()
                 ->title('Check-out Failed')
-                ->body('Error: ' . $e->getMessage())
-                ->danger()
-                ->send();
-        }
-    }
-
-    public function additionalCheckIn(): void
-    {
-        $data = $this->form->getState();
-        $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
-
-        if (!$employee) {
-            Notification::make()
-                ->title('Error')
-                ->body('Employee profile not found.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        // Validate office location if selected
-        if ($data['work_location'] === 'office') {
-            if (empty($data['latitude']) || empty($data['longitude'])) {
-                Notification::make()
-                    ->title('Location Required')
-                    ->body('Location verification is required for office check-in.')
-                    ->warning()
-                    ->send();
-                return;
-            }
-        }
-
-        // Validate photo for anywhere location
-        if ($data['work_location'] === 'anywhere' && empty($data['image_path'])) {
-            Notification::make()
-                ->title('Photo Required')
-                ->body('Photo is required for remote work check-in.')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        try {
-            $attendance = Attendance::create([
-                'employee_id' => $employee->id,
-                'start_time' => now()->format('H:i:s'),
-                'work_location' => $data['work_location'],
-                'latitude' => $data['latitude'] ?? null,
-                'longitude' => $data['longitude'] ?? null,
-                'image_path' => $data['image_path'] ?? null,
-            ]);
-
-            $requiredHours = $employee->division->required_workhours ?? 8;
-
-            Notification::make()
-                ->title('Additional Check-in Successful')
-                ->body('You have checked in again at ' . now()->format('H:i') . '. Please complete your remaining work hours.')
-                ->success()
-                ->send();
-
-            $this->checkTodayAttendance();
-            $this->form->fill();
-
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Check-in Failed')
                 ->body('Error: ' . $e->getMessage())
                 ->danger()
                 ->send();
@@ -462,10 +416,12 @@ class AbsenWidget extends Widget implements HasForms
             ];
         }
 
+        $requiredHours = $employee->division->required_workhours ?? 8;
+
         if (!$this->todayAttendance) {
             return [
                 'status' => 'not_checked_in',
-                'message' => 'You haven\'t checked in today',
+                'message' => 'You haven\'t checked in today (Required: ' . $requiredHours . 'h)',
                 'color' => 'gray'
             ];
         }
@@ -473,30 +429,30 @@ class AbsenWidget extends Widget implements HasForms
         if ($this->todayAttendance->end_time === null) {
             $startTime = \Carbon\Carbon::parse($this->todayAttendance->start_time);
             $currentDuration = $startTime->diffInHours(now(), true);
+            $totalTodayHours = $this->getTodayTotalWorkHours($employee) + $currentDuration;
             
             return [
                 'status' => 'checked_in',
-                'message' => 'Checked in at ' . $this->todayAttendance->start_time . ' (Working: ' . number_format($currentDuration, 1) . 'h)',
+                'message' => 'Checked in at ' . $this->todayAttendance->start_time . ' (Current session: ' . number_format($currentDuration, 1) . 'h, Total today: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h)',
                 'color' => 'success'
             ];
         }
 
         // Check total work hours for the day
-        $requiredHours = $employee->division->required_workhours ?? 8;
         $totalTodayHours = $this->getTodayTotalWorkHours($employee);
 
         if ($totalTodayHours < $requiredHours) {
             $remainingHours = $requiredHours - $totalTodayHours;
             return [
                 'status' => 'insufficient_hours',
-                'message' => 'Work hours insufficient: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h required (' . number_format($remainingHours, 1) . 'h remaining)',
+                'message' => 'Work hours: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h required (' . number_format($remainingHours, 1) . 'h remaining). You can check-in again.',
                 'color' => 'warning'
             ];
         }
 
         return [
             'status' => 'completed',
-            'message' => 'Work completed: Total ' . number_format($totalTodayHours, 1) . 'h worked today',
+            'message' => 'Work completed: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h required ✓',
             'color' => 'info'
         ];
     }

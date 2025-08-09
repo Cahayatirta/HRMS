@@ -38,6 +38,11 @@ class Attendance extends Model
         $this->is_deleted = true;
         $this->save();
     }
+ 
+    public function getCreatedDateAttribute()
+    {
+        return $this->created_at->toDateString(); // hasilnya format YYYY-MM-DD
+    }
 
     public function GetLocationAttribute(Request $request): array
     {
