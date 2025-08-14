@@ -22,6 +22,15 @@ class Division extends Model
         return $this->belongsToMany(Access::class, 'division_accesses', 'division_id', 'access_id')->withTimestamps();
     }
 
+    // Untuk kompatibilitas dengan Shield, kita akan buat method helper
+    public function getPermissionsAttribute()
+    {
+        // Konversi dari sistem Access lama ke permission Spatie
+        return $this->accesses->map(function($access) {
+            return $access->access_name;
+        });
+    }
+
     public function softDelete(Request $request)
     {
         $this->is_deleted = true;

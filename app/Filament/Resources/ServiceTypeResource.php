@@ -32,6 +32,9 @@ use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
+// Filament Plugin - Shield
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+
 class ServiceTypeResource extends Resource
 {
     protected static ?string $model = ServiceType::class;
@@ -39,6 +42,103 @@ class ServiceTypeResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
     protected static ?string $navigationGroup = 'Client And Service Management';
+
+        /**
+     * Shield permission prefixes
+     */
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
+    /**
+     * Check if user can view any records
+     */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        
+        // Super admin can access everything
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Check specific permission
+        return $user && $user->can('view_any_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can create records
+     */
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user && $user->can('create_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can edit specific record
+     */
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Basic permission check
+        if (!$user || !$user->can('update_' . strtolower(class_basename(static::$model)))) {
+            return false;
+        }
+
+        // CUSTOM LOGIC: Tambahkan logic khusus jika diperlukan
+        // Contoh: hanya bisa edit data divisi sendiri
+        // $userDivision = $user->employee?->division_id;
+        // return $userDivision && $record->division_id === $userDivision;
+
+        return true;
+    }
+
+    /**
+     * Check if user can delete specific record
+     */
+    public static function canDelete($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user && $user->can('delete_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can delete any records (bulk delete)
+     */
+    public static function canDeleteAny(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user && $user->can('delete_any_' . strtolower(class_basename(static::$model)));
+    }
 
     public static function form(Form $form): Form
     {

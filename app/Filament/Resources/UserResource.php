@@ -24,6 +24,9 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 
+// Filament Plugin - Shield
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -32,9 +35,49 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'System Settings';
 
-    public static function canAccess(): bool
+    // Shield permission prefixes
+    public static function getPermissionPrefixes(): array
     {
-        return auth()->user()?->role === 'admin';
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
+    // Replace canAccess() dengan Shield permissions
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        
+        // Super admin bisa akses semua
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Check permission atau role admin lama
+        return $user && ($user->can('view_any_user') || $user->role === 'admin');
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+        return $user && ($user->hasRole('super_admin') || $user->can('create_user') || $user->role === 'admin');
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        return $user && ($user->hasRole('super_admin') || $user->can('update_user') || $user->role === 'admin');
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = auth()->user();
+        return $user && ($user->hasRole('super_admin') || $user->can('delete_user') || $user->role === 'admin');
     }
 
     public static function form(Form $form): Form

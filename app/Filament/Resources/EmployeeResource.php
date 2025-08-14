@@ -16,6 +16,9 @@ use App\Models\User;
 // Fillament - Core
 use Filament\Resources\Resource;
 
+// Shield
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+
 // Fillament - Forms
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -42,14 +45,100 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
+// Spatie Permission
+use Spatie\Permission\Models\Role;
 
-class EmployeeResource extends Resource
+class EmployeeResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Employee::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
     protected static ?string $navigationGroup = 'Human Resources';
+
+    // Shield permission prefixes
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
+    // Shield permission checks
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->can('view_any_employee');
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Hanya HR dan admin yang bisa create employee
+        return $user->can('create_employee') || $user->hasRole('hr');
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->can('update_employee');
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->can('delete_employee') && $user->hasRole('hr');
+    }
+
+    // Filter data berdasarkan divisi untuk non-admin
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Super admin bisa lihat semua
+        if ($user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        // HR bisa lihat semua employee
+        if ($user->hasRole('hr')) {
+            return $query;
+        }
+
+        // User lain hanya bisa lihat employee di divisi yang sama
+        $userEmployee = $user->employee;
+        if ($userEmployee && $userEmployee->division_id) {
+            $query->where('division_id', $userEmployee->division_id);
+        }
+
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
@@ -77,16 +166,54 @@ class EmployeeResource extends Resource
                             : ['' => 'Semua user sudah memiliki data employee'];
                     })
                     ->searchable()
-                    ->disabled(fn (string $context): bool => $context === 'edit'),
+                    ->disabled(fn (string $context): bool => $context === 'edit')
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, $set) {
+                        // Auto-suggest role based on division
+                        if ($state) {
+                            $user = User::find($state);
+                            if ($user && $user->employee && $user->employee->division) {
+                                $divisionName = strtolower($user->employee->division->division_name);
+                                $set('user_role', $divisionName);
+                            }
+                        }
+                    }),
+
                 Select::make('division_id')
-                    // ->relationship('division', 'division_name')
                     ->options(\App\Models\Division::all()->pluck('division_name', 'id'))
                     ->label('Division')
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, $set) {
+                        // Auto-suggest role based on division
+                        if ($state) {
+                            $division = \App\Models\Division::find($state);
+                            if ($division) {
+                                $divisionName = strtolower($division->division_name);
+                                $set('user_role', $divisionName);
+                            }
+                        }
+                    }),
+
+                // Field untuk memilih role user
+                Select::make('user_role')
+                    ->label('User Role')
+                    ->options(function () {
+                        return Role::where('name', '!=', 'super_admin')
+                            ->pluck('name', 'name')
+                            ->mapWithKeys(function ($name) {
+                                return [$name => ucfirst($name)];
+                            });
+                    })
+                    ->searchable()
+                    ->helperText('Role akan otomatis di-assign ke user yang dipilih')
+                    ->visible(fn () => auth()->user()->hasRole(['super_admin', 'hr'])),
+
                 TextInput::make('full_name')
                     ->required()
                     ->placeholder('Masukkan nama lengkap...'),
+
                 Select::make('gender')
                     ->label('Gender')
                     ->required()
@@ -94,26 +221,32 @@ class EmployeeResource extends Resource
                         'male' => 'Male',
                         'female' => 'Female',
                     ]),
+
                 DatePicker::make('birth_date')
                     ->required(),
+
                 TextInput::make('phone_number')
                     ->numeric()
                     ->tel()
                     ->required()
                     ->placeholder('e.g. +1234567890'),
+
                 Textarea::make('address')
                     ->required()
                     ->columnSpanFull()
                     ->placeholder('Masukkan alamat...'),
+
                 FileUpload::make('image_path')
                     ->image()
                     ->directory('employees'),
+
                 Select::make('status')
                     ->required()
                     ->options([
                         'active' => 'Active',
                         'inactive' => 'Inactive',
-                    ]),
+                    ])
+                    ->default('active'),
             ]);
     }
 
@@ -129,6 +262,11 @@ class EmployeeResource extends Resource
                     ->label('User')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('user.roles.name')
+                    ->label('Role')
+                    ->badge()
+                    ->separator(',')
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
                 TextColumn::make('division.division_name')
                     ->label('Division')
                     ->searchable()
@@ -136,23 +274,37 @@ class EmployeeResource extends Resource
                 TextColumn::make('full_name')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'inactive' => 'danger',
+                    }),
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('division_id')
+                    ->label('Division')
+                    ->relationship('division', 'division_name'),
+                SelectFilter::make('status')
+                    ->options([
+                        'active' => 'Active',
+                        'inactive' => 'Inactive',
+                    ]),
                 SelectFilter::make('Deleted Status')
-                ->options([
-                    'active' => 'Active',
-                    'deleted' => 'Deleted',
-                ])
-                ->query(function (Builder $query, array $data): Builder {
-                    if ($data['value'] === 'deleted') {
-                        return $query->where('is_deleted', true);
-                    }
-                    return $query->where('is_deleted', false);
-                }),
+                    ->options([
+                        'active' => 'Active',
+                        'deleted' => 'Deleted',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if ($data['value'] === 'deleted') {
+                            return $query->where('is_deleted', true);
+                        }
+                        return $query->where('is_deleted', false);
+                    }),
             ])
             ->actions([
                 EditAction::make(),

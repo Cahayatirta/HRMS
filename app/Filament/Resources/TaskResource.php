@@ -42,6 +42,9 @@ use Filament\Forms\Components\Repeater;
 // Laravel
 use Illuminate\Database\Eloquent\Builder;
 
+// Filament Plugin - Shield
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+
 class TaskResource extends Resource
 {
     protected static ?string $model = Task::class;
@@ -49,6 +52,130 @@ class TaskResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-check-circle';
 
     protected static ?string $navigationGroup = 'Project Management';
+
+    /**
+     * Shield permission prefixes
+     */
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
+    /**
+     * Check if user can view any records
+     */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        
+        // Super admin can access everything
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Check specific permission
+        return $user && $user->can('view_any_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can create records
+     */
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Role "user" tidak bisa create task
+        if ($user && $user->hasRole('user')) {
+            return false;
+        }
+
+        return $user && $user->can('create_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can edit specific record
+     */
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Basic permission check
+        if (!$user || !$user->can('update_' . strtolower(class_basename(static::$model)))) {
+            return false;
+        }
+
+        // CUSTOM LOGIC untuk role "user"
+        if ($user->hasRole('user')) {
+            // Cek apakah user memiliki employee record
+            $userEmployee = $user->employee;
+            if (!$userEmployee) {
+                return false;
+            }
+
+            // Cek apakah task ini di-assign ke user yang sedang login
+            $isAssignedToUser = $record->employees()->where('employee_id', $userEmployee->id)->exists();
+            
+            // Jika tidak di-assign ke user ini, tidak bisa edit
+            if (!$isAssignedToUser) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if user can delete specific record
+     */
+    public static function canDelete($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Role "user" tidak bisa delete task
+        if ($user && $user->hasRole('user')) {
+            return false;
+        }
+
+        return $user && $user->can('delete_' . strtolower(class_basename(static::$model)));
+    }
+
+    /**
+     * Check if user can delete any records (bulk delete)
+     */
+    public static function canDeleteAny(): bool
+    {
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Role "user" tidak bisa bulk delete
+        if ($user && $user->hasRole('user')) {
+            return false;
+        }
+
+        return $user && $user->can('delete_any_' . strtolower(class_basename(static::$model)));
+    }
 
     public static function form(Form $form): Form
     {
@@ -84,7 +211,8 @@ class TaskResource extends Resource
                 ->nullable()
                 ->default(0)
                 ->columnSpanFull()
-                ->preload(),
+                ->preload()
+                ->disabled(fn () => auth()->user()->hasRole('user')), // Disable untuk role user
 
             Repeater::make('subtasks')
                 ->relationship('subtasks')
@@ -100,7 +228,8 @@ class TaskResource extends Resource
                         ->label('Assigned Employee')
                         ->nullable()
                         ->default(0)
-                        ->preload(),
+                        ->preload()
+                        ->disabled(fn () => auth()->user()->hasRole('user')), // Disable untuk role user
 
                     DatePicker::make('deadline')
                         ->label('Subtask Deadline'),
@@ -132,10 +261,7 @@ class TaskResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->query(Task::query()
-                ->where('parent_task_id', '=', null)
-                ->where('is_deleted', '=', 0)
-            )
+            ->query(static::getEloquentQuery())
             ->columns([
                 TextColumn::make('task_name')
                     ->searchable(),
@@ -188,7 +314,8 @@ class TaskResource extends Resource
                     }),
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(fn ($record) => static::canEdit($record)),
                 ViewAction::make(),
             ])
             ->bulkActions([
@@ -196,6 +323,33 @@ class TaskResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Override getEloquentQuery to filter tasks for regular users
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->where('parent_task_id', '=', null)
+            ->where('is_deleted', '=', 0);
+
+        $user = auth()->user();
+        
+        // Jika user memiliki role "user", filter hanya task yang di-assign ke mereka
+        if ($user && $user->hasRole('user')) {
+            $userEmployee = $user->employee;
+            if ($userEmployee) {
+                $query->whereHas('employees', function ($q) use ($userEmployee) {
+                    $q->where('employee_id', $userEmployee->id);
+                });
+            } else {
+                // Jika user tidak memiliki employee record, tidak tampilkan task apapun
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

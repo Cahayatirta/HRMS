@@ -8,11 +8,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Traits\SoftDeleteBoolean;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, SoftDeleteBoolean;
+    use HasFactory, Notifiable, SoftDeleteBoolean, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -92,4 +93,24 @@ class User extends Authenticatable
     {
         return ['employee', 'tasks', 'workhourPlans', 'meetings'];
     }
+
+    // Method untuk akses panel Filament
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Admin bisa akses semua
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        // User bisa akses jika punya employee record dan active
+        return $this->employee && $this->employee->status === 'active';
+    }
+
+    // Method helper untuk mendapatkan divisi user
+    public function getDivision()
+    {
+        return $this->employee?->division;
+    }
+
+    
 }
