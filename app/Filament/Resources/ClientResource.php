@@ -103,7 +103,14 @@ class ClientResource extends Resource
         
         if ($user && $user->hasRole('super_admin')) {
             return true;
+        }else if ($user && $user->role == "user" && $user->id == $record){
+            dd($record);
+            return true; 
         }
+
+            dd($record);
+
+        dd($user->role);
 
         // Basic permission check
         if (!$user || !$user->can('update_' . strtolower(class_basename(static::$model)))) {
