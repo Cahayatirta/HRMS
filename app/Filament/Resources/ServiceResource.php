@@ -93,6 +93,8 @@ class ServiceResource extends Resource
             return true;
         }
 
+        // return true;
+
         return $user && $user->can('create_' . strtolower(class_basename(static::$model)));
     }
 
@@ -111,11 +113,6 @@ class ServiceResource extends Resource
         if (!$user || !$user->can('update_' . strtolower(class_basename(static::$model)))) {
             return false;
         }
-
-        // CUSTOM LOGIC: Tambahkan logic khusus jika diperlukan
-        // Contoh: hanya bisa edit data divisi sendiri
-        // $userDivision = $user->employee?->division_id;
-        // return $userDivision && $record->division_id === $userDivision;
 
         return true;
     }

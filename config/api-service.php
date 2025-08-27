@@ -35,4 +35,9 @@ return [
         // Add any additional middleware you want to apply to the logout route
     ],
     'use-spatie-permission-middleware' => true,
+    'middleware' => [
+        'api',  // hanya 'api' saja, JANGAN 'web'
+        // 'auth:sanctum', // comment dulu untuk testing
+    ],
+    'disable_csrf' => true,
 ];
