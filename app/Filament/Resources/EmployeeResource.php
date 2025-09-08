@@ -73,6 +73,10 @@ class EmployeeResource extends Resource implements HasShieldPermissions
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user->hasRole('super_admin')) {
             return true;
@@ -84,6 +88,10 @@ class EmployeeResource extends Resource implements HasShieldPermissions
     public static function canCreate(): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user->hasRole('super_admin')) {
             return true;
@@ -96,6 +104,10 @@ class EmployeeResource extends Resource implements HasShieldPermissions
     public static function canEdit($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user->hasRole('super_admin')) {
             return true;
@@ -107,37 +119,16 @@ class EmployeeResource extends Resource implements HasShieldPermissions
     public static function canDelete($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user->hasRole('super_admin')) {
             return true;
         }
 
         return $user->can('delete_employee') && $user->hasRole('hr');
-    }
-
-    // Filter data berdasarkan divisi untuk non-admin
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        $query = parent::getEloquentQuery();
-        $user = auth()->user();
-
-        // Super admin bisa lihat semua
-        if ($user->hasRole('super_admin')) {
-            return $query;
-        }
-
-        // HR bisa lihat semua employee
-        if ($user->hasRole('hr')) {
-            return $query;
-        }
-
-        // User lain hanya bisa lihat employee di divisi yang sama
-        $userEmployee = $user->employee;
-        if ($userEmployee && $userEmployee->division_id) {
-            $query->where('division_id', $userEmployee->division_id);
-        }
-
-        return $query;
     }
 
     public static function form(Form $form): Form

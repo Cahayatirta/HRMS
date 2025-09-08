@@ -17,8 +17,8 @@ class ClientApiService extends ApiService
             Handlers\UpdateHandler::class,
             Handlers\DeleteHandler::class,
             Handlers\PaginationHandler::class,
-            Handlers\DetailHandler::class,
-            Handlers\ClientHandler::class
+            Handlers\DetailHandler::class
         ];
+
     }
 }

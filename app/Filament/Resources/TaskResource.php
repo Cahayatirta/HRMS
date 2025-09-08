@@ -75,6 +75,10 @@ class TaskResource extends Resource
     {
         $user = auth()->user();
         
+        if (!$user) {
+            return false;
+        }
+
         // Super admin can access everything
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -90,6 +94,10 @@ class TaskResource extends Resource
     public static function canCreate(): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -109,6 +117,10 @@ class TaskResource extends Resource
     public static function canEdit($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -145,6 +157,10 @@ class TaskResource extends Resource
     public static function canDelete($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -164,6 +180,10 @@ class TaskResource extends Resource
     public static function canDeleteAny(): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user && $user->hasRole('super_admin')) {
             return true;

@@ -22,6 +22,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Override API middleware setelah plugin loaded
+        // if (class_exists(\Rupadana\ApiService\ApiServicePlugin::class)) {
+        //     config([
+        //         'filament-api-service.middlewares' => [
+        //             'auth:sanctum'
+        //         ]
+        //     ]);
+        // }
         Paginator::useBootstrap();
     }
 }

@@ -1,15 +1,12 @@
 <?php
-// App/Filament/Resources/ServiceResource/Api/Handlers/UpdateHandler.php
 namespace App\Filament\Resources\ServiceResource\Api\Handlers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Rupadana\ApiService\Http\Handlers;
 use App\Filament\Resources\ServiceResource;
-use App\Models\Service;
+use App\Filament\Resources\ServiceResource\Api\Requests\UpdateServiceRequest;
 
-class UpdateHandler extends Handlers 
-{
+class UpdateHandler extends Handlers {
     public static string | null $uri = '/{id}';
     public static string | null $resource = ServiceResource::class;
 
@@ -22,59 +19,25 @@ class UpdateHandler extends Handlers
         return static::$resource::getModel();
     }
 
-    public function handler(Request $request)
+
+    /**
+     * Update Service
+     *
+     * @param UpdateServiceRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function handler(UpdateServiceRequest $request)
     {
-        try {
-            $id = $request->route('id');
-            $service = Service::find($id);
+        $id = $request->route('id');
 
-            if (!$service) {
-                return static::sendNotFoundResponse();
-            }
+        $model = static::getModel()::find($id);
 
-            DB::beginTransaction();
+        if (!$model) return static::sendNotFoundResponse();
 
-            // 1. Update data service utama
-            $serviceData = $request->only([
-                'client_id', 
-                'service_type_id', 
-                'status', 
-                'price', 
-                'start_time', 
-                'expired_time'
-            ]);
-            $service->update($serviceData);
+        $model->fill($request->all());
 
-            // 2. Handle serviceTypeData relationship
-            if ($request->has('serviceTypeData')) {
-                if (is_array($request->serviceTypeData)) {
-                    // Delete existing serviceTypeData
-                    $service->serviceTypeData()->delete();
-                    
-                    // Create new serviceTypeData
-                    foreach ($request->serviceTypeData as $data) {
-                        $service->serviceTypeData()->create([
-                            'field_id' => $data['field_id'],
-                            'value' => $data['value'],
-                        ]);
-                    }
-                }
-            }
+        $model->save();
 
-            DB::commit();
-
-            // Load relationships untuk response
-            $service->load(['client', 'serviceType', 'serviceTypeData']);
-
-            return static::sendSuccessResponse($service, "Successfully Update Resource");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Internal server error',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return static::sendSuccessResponse($model, "Successfully Update Resource");
     }
-} 
+}

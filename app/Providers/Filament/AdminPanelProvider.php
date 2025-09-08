@@ -54,8 +54,12 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
-                FilamentShieldPlugin::make(),
-                ApiServicePlugin::make(),
+                // FilamentShieldPlugin::make(),
+                ApiServicePlugin::make()
+                    ->middleware([
+                        'auth:sanctum', // Hanya gunakan auth sanctum
+                        // Jangan tambahkan middleware permission lain
+                    ]),
             ])
             ->authMiddleware([
                 Authenticate::class,

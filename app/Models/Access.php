@@ -10,7 +10,13 @@ class Access extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['access_name', 'access_description', 'is_deleted'];
+    protected $fillable = ['access_name', 'access_description',
+        'is_deleted'];
+    protected $casts = [
+        'is_deleted' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function divisions()
     {
@@ -23,4 +29,15 @@ class Access extends Model
         $this->save();
     }
 
+    // Scope untuk record aktif
+    public function scopeActive($query)
+    {
+        return $query->where('is_deleted', false);
+    }
+
+    // Scope untuk record yang dihapus
+    public function scopeDeleted($query)
+    {
+        return $query->where('is_deleted', true);
+    }
 }

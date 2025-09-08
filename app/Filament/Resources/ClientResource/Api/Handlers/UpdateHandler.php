@@ -2,13 +2,11 @@
 namespace App\Filament\Resources\ClientResource\Api\Handlers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Rupadana\ApiService\Http\Handlers;
 use App\Filament\Resources\ClientResource;
-use App\Models\Client;
+use App\Filament\Resources\ClientResource\Api\Requests\UpdateClientRequest;
 
-class UpdateHandler extends Handlers 
-{
+class UpdateHandler extends Handlers {
     public static string | null $uri = '/{id}';
     public static string | null $resource = ClientResource::class;
 
@@ -21,53 +19,25 @@ class UpdateHandler extends Handlers
         return static::$resource::getModel();
     }
 
-    public function handler(Request $request)
+
+    /**
+     * Update Client
+     *
+     * @param UpdateClientRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function handler(UpdateClientRequest $request)
     {
-        try {
-            $id = $request->route('id');
-            $client = Client::find($id);
+        $id = $request->route('id');
 
-            if (!$client) {
-                return static::sendNotFoundResponse();
-            }
+        $model = static::getModel()::find($id);
 
-            DB::beginTransaction();
+        if (!$model) return static::sendNotFoundResponse();
 
-            // 1. Update data client utama
-            $clientData = $request->only(['name', 'phone_number', 'email', 'address']);
-            $client->update($clientData);
+        $model->fill($request->all());
 
-            // 2. Handle clientData relationship
-            if ($request->has('clientData')) {
-                if (is_array($request->clientData)) {
-                    // Delete existing clientData
-                    $client->clientData()->delete();
-                    
-                    // Create new clientData
-                    foreach ($request->clientData as $data) {
-                        $client->clientData()->create([
-                            'account_type' => $data['account_type'],
-                            'account_credential' => $data['account_credential'],
-                            'account_password' => $data['account_password'], // akan di-encrypt otomatis
-                        ]);
-                    }
-                }
-            }
+        $model->save();
 
-            DB::commit();
-
-            // Load relationship untuk response
-            $client->load('clientData');
-
-            return static::sendSuccessResponse($client, "Successfully Update Resource");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Internal server error',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return static::sendSuccessResponse($model, "Successfully Update Resource");
     }
 }

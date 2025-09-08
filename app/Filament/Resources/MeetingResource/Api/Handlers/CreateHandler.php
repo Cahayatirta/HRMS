@@ -1,13 +1,14 @@
 <?php
-namespace App\Filament\Resources\ClientResource\Api\Handlers;
+namespace App\Filament\Resources\MeetingResource\Api\Handlers;
 
 use Illuminate\Http\Request;
 use Rupadana\ApiService\Http\Handlers;
-use App\Filament\Resources\ClientResource;
+use App\Filament\Resources\MeetingResource;
+use App\Filament\Resources\MeetingResource\Api\Requests\CreateMeetingRequest;
 
-class ClientHandler extends Handlers {
+class CreateHandler extends Handlers {
     public static string | null $uri = '/';
-    public static string | null $resource = ClientResource::class;
+    public static string | null $resource = MeetingResource::class;
 
     public static function getMethod()
     {
@@ -18,7 +19,13 @@ class ClientHandler extends Handlers {
         return static::$resource::getModel();
     }
 
-    public function handler(Request $request)
+    /**
+     * Create Meeting
+     *
+     * @param CreateMeetingRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function handler(CreateMeetingRequest $request)
     {
         $model = new (static::getModel());
 

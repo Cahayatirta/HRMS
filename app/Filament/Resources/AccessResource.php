@@ -36,7 +36,7 @@ use App\Filament\Resources\AccessResource\RelationManagers;
 use App\Models\Access;
 
 // Filament Plugin - Shield
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;   
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
 class AccessResource extends Resource
 {
@@ -48,7 +48,7 @@ class AccessResource extends Resource
 
     protected static ?string $navigationGroup = 'System Settings';
 
-        /**
+    /**
      * Shield permission prefixes
      */
     public static function getPermissionPrefixes(): array
@@ -69,6 +69,10 @@ class AccessResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         // Super admin can access everything
         if ($user && $user->hasRole('super_admin')) {
@@ -86,6 +90,10 @@ class AccessResource extends Resource
     {
         $user = auth()->user();
         
+        if (!$user) {
+            return false;
+        }
+
         if ($user && $user->hasRole('super_admin')) {
             return true;
         }
@@ -99,6 +107,10 @@ class AccessResource extends Resource
     public static function canEdit($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
         
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -109,11 +121,6 @@ class AccessResource extends Resource
             return false;
         }
 
-        // CUSTOM LOGIC: Tambahkan logic khusus jika diperlukan
-        // Contoh: hanya bisa edit data divisi sendiri
-        // $userDivision = $user->employee?->division_id;
-        // return $userDivision && $record->division_id === $userDivision;
-
         return true;
     }
 
@@ -123,7 +130,11 @@ class AccessResource extends Resource
     public static function canDelete($record): bool
     {
         $user = auth()->user();
-        
+     
+        if (!$user) {
+            return false;
+        }
+
         if ($user && $user->hasRole('super_admin')) {
             return true;
         }
@@ -137,7 +148,11 @@ class AccessResource extends Resource
     public static function canDeleteAny(): bool
     {
         $user = auth()->user();
-        
+
+        if (!$user) {
+            return false;
+        }
+
         if ($user && $user->hasRole('super_admin')) {
             return true;
         }
@@ -150,10 +165,10 @@ class AccessResource extends Resource
         return $form
             ->schema([
                 TextInput::make('access_name')
-                    ->required(),
-                TextInput::make('access_description'),
-                Toggle::make('is_deleted')
-                    ->hidden(),
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('access_description')
+                    ->maxLength(500),
             ]);
     }
 
@@ -162,9 +177,11 @@ class AccessResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('access_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('access_description')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(50),
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
@@ -179,7 +196,8 @@ class AccessResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('Deleted Status')
+                SelectFilter::make('deleted_status')
+                    ->label('Status')
                     ->options([
                         'active' => 'Active',
                         'deleted' => 'Deleted',
@@ -188,7 +206,10 @@ class AccessResource extends Resource
                         if ($data['value'] === 'deleted') {
                             return $query->where('is_deleted', true);
                         }
-                        return $query->where('is_deleted', false);
+                        if ($data['value'] === 'active') {
+                            return $query->where('is_deleted', false);
+                        }
+                        return $query;
                     }),
             ])
             ->actions([
@@ -198,7 +219,8 @@ class AccessResource extends Resource
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

@@ -53,6 +53,10 @@ class UserResource extends Resource
     {
         $user = auth()->user();
         
+        if (!$user) {
+            return false;
+        }
+        
         // Super admin bisa akses semua
         if ($user && $user->hasRole('super_admin')) {
             return true;
@@ -65,18 +69,33 @@ class UserResource extends Resource
     public static function canCreate(): bool
     {
         $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+
         return $user && ($user->hasRole('super_admin') || $user->can('create_user') || $user->role === 'admin');
     }
 
     public static function canEdit($record): bool
     {
         $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+        
         return $user && ($user->hasRole('super_admin') || $user->can('update_user') || $user->role === 'admin');
     }
 
     public static function canDelete($record): bool
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+        
         return $user && ($user->hasRole('super_admin') || $user->can('delete_user') || $user->role === 'admin');
     }
 

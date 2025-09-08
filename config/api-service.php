@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'middlewares' => [
+        'auth:sanctum',
+        'api.bypass', // Tambahkan middleware custom kita
+    ],
+    'authentication' => [
+        'enabled' => true,
+        'guard' => 'sanctum',
+    ],  
+    // Disable permission checking jika menggunakan Shield
+    'permissions' => [
+        'enabled' => false,
+    ],
     'navigation' => [
         'token' => [
             'cluster' => null,
@@ -34,10 +46,5 @@ return [
         'auth:sanctum',
         // Add any additional middleware you want to apply to the logout route
     ],
-    'use-spatie-permission-middleware' => true,
-    'middleware' => [
-        'api',  // hanya 'api' saja, JANGAN 'web'
-        // 'auth:sanctum', // comment dulu untuk testing
-    ],
-    'disable_csrf' => true,
+    'use-spatie-permission-middleware' => false,
 ];
