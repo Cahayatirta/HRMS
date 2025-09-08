@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SyncController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccessApiController;
 
@@ -25,5 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Manual Access API endpoints (sebagai backup jika TomatoPHP tidak working)
     Route::apiResource('accesses', AccessApiController::class);
 });
+
+// Mobile Sync API
+Route::post('/sync/push', [SyncController::class, 'push'])->middleware('auth:sanctum');
+Route::get('/sync/pull', [SyncController::class, 'pull'])->middleware('auth:sanctum');
 
 // Tomato API routes akan otomatis ter-generate dengan middleware auth:sanctum

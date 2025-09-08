@@ -74,19 +74,34 @@ class AuthController extends Controller
 
         $token = $user->createToken('api-token')->plainTextToken;
 
+        // Get employee and division data
+        $employee = $user->employee;
+        $division = $employee ? $employee->division : null;
+        
+        // Calculate token expiry
+        $expiresAt = now()->addYear()->toISOString();
+
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful',
+            'message' => 'Login successful',
             'data' => [
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'role' => $user->roles->first()?->name ?? 'employee', // Single role as string
                 ],
+                'employee' => $employee ? [
+                    'id' => $employee->id,
+                ] : null,
+                'division' => $division ? [
+                    'name' => $division->name,
+                ] : null,
                 'token' => $token,
                 'token_type' => 'Bearer',
+                'expires_at' => $expiresAt,
             ]
-        ], 201);
+        ], 200);
     }
 
     /**
