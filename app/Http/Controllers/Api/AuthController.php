@@ -93,6 +93,7 @@ class AuthController extends Controller
                 ],
                 'employee' => $employee ? [
                     'id' => $employee->id,
+                    'full_name' => $employee->full_name
                 ] : null,
                 'division' => $division ? [
                     'name' => $division->name,
