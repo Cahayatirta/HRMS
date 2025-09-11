@@ -24,12 +24,12 @@ class CreateAttendanceRequest extends FormRequest
         return [
 			'employee_id' => 'required|integer',
 			'start_time' => 'required',
-			'end_time' => 'required',
-			'work_location' => 'required',
-			'longitude' => 'required|numeric',
-			'latitude' => 'required|numeric',
-			'image_path' => 'required',
-			'task_link' => 'required',
+			'end_time' => 'required|after:start_time',
+			'work_location' => 'required|string',
+			'longitude' => 'numeric|nullable',
+			'latitude' => 'numeric|nullable',
+			'image_path' => 'nullable|string',
+			'task_link' => 'nullable|string',
 			'is_deleted' => 'required'
 		];
     }
