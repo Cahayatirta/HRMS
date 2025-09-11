@@ -1,10 +1,10 @@
 <?php
 namespace App\Filament\Resources\ServiceResource\Api\Handlers;
 
-use Illuminate\Http\Request;
 use Rupadana\ApiService\Http\Handlers;
 use App\Filament\Resources\ServiceResource;
 use App\Filament\Resources\ServiceResource\Api\Requests\CreateServiceRequest;
+use App\Models\Service; // asumsi nama tabel untuk simpan field value
 
 class CreateHandler extends Handlers {
     public static string | null $uri = '/';
@@ -27,12 +27,31 @@ class CreateHandler extends Handlers {
      */
     public function handler(CreateServiceRequest $request)
     {
+        $data = $request->only([
+            'client_id',
+            'service_type_id',
+            'status',
+            'price',
+            'start_time',
+            'expired_time'
+        ]);
+
         $model = new (static::getModel());
-
-        $model->fill($request->all());
-
+        $model->fill($data);
         $model->save();
 
-        return static::sendSuccessResponse($model, "Successfully Create Resource");
+        
+        // handle repeater serviceTypeData
+        if ($request->has('serviceTypeData')) {
+            foreach ($request->serviceTypeData as $fieldData) {
+                $model->serviceTypeData()->create([
+                    'service_id' => $model->id,
+                    'field_id'   => $fieldData['field_id'],
+                    'value'      => $fieldData['value'],
+                ]);
+            }
+        }
+
+        return static::sendSuccessResponse($model->load(['client','serviceType']), "Successfully Created Service");
     }
 }
