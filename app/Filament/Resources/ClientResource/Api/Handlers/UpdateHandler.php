@@ -5,6 +5,8 @@ use Illuminate\Http\Request;
 use Rupadana\ApiService\Http\Handlers;
 use App\Filament\Resources\ClientResource;
 use App\Filament\Resources\ClientResource\Api\Requests\UpdateClientRequest;
+use App\Models\Client;
+use Illuminate\Support\Facades\Crypt;
 
 class UpdateHandler extends Handlers {
     public static string | null $uri = '/{id}';
@@ -26,18 +28,47 @@ class UpdateHandler extends Handlers {
      * @param UpdateClientRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function handler(UpdateClientRequest $request)
+    public function handler(UpdateClientRequest $request, Client $client)
     {
-        $id = $request->route('id');
+        $validated = $request->validated();
 
-        $model = static::getModel()::find($id);
+        $clientId = $request->route('id');
+        $client = Client::findOrFail($clientId);
 
-        if (!$model) return static::sendNotFoundResponse();
+        $clientData = $request->clientData ?? [];
+        unset($validated['clientData']);
 
-        $model->fill($request->all());
+        // update data utama client
+        $client->update($validated);
 
-        $model->save();
+        if (!empty($clientData)) {
+            foreach ($clientData as $data) {
+                $client->clientData()->updateOrCreate(
+                    [
+                        'account_type' => $data['account_type'], // pakai unique key lain
+                    ],
+                    [
+                        'account_credential' => $data['account_credential'],
+                        'account_password' => Crypt::encryptString($data['account_password']),
+                    ]
+                );
+            }
+        }
 
-        return static::sendSuccessResponse($model, "Successfully Update Resource");
+        return response()->json([
+            'data' => $client->load('clientData')
+        ]);
     }
 }
+
+        // $id = $request->route('id');
+
+        // $model = static::getModel()::find($id);
+
+        // if (!$model) return static::sendNotFoundResponse();
+
+        // $model->fill($request->all());
+
+        // $model->save();
+
+        // return static::sendSuccessResponse($model, "Successfully Update Resource");
