@@ -29,7 +29,7 @@ class CreateEmployeeRequest extends FormRequest
 			'birth_date' => 'required|date',
 			'phone_number' => 'required',
 			'address' => 'required|string',
-			'image_path' => 'required',
+			'image_path' => 'nullable|string',
 			'status' => 'required',
 			'is_deleted' => 'required'
 		];

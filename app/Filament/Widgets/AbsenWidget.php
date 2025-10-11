@@ -31,6 +31,8 @@ class AbsenWidget extends Widget implements HasForms
     public ?Attendance $todayAttendance = null;
     public bool $isCheckingLocation = false;
 
+    public bool $isOutsideOffice = false;
+
     public function mount(): void
     {
         $this->checkTodayAttendance();
@@ -169,6 +171,7 @@ class AbsenWidget extends Widget implements HasForms
     protected function handleOfficeLocation($set): void
     {
         $this->isCheckingLocation = true;
+        $this->isOutsideOffice = false; 
         
         try {
             $attendance = new Attendance();
@@ -210,6 +213,7 @@ class AbsenWidget extends Widget implements HasForms
                         ->body("You are " . round($distance) . " meters from office. Please select 'Anywhere' or come to office.")
                         ->warning()
                         ->send();
+                    $this->isOutsideOffice = true;
                 }
             }
         } catch (\Exception $e) {
@@ -239,6 +243,16 @@ class AbsenWidget extends Widget implements HasForms
             Notification::make()
                 ->title('Error')
                 ->body('Employee profile not found.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // Prevent check-in if outside office area
+        if ($data['work_location'] === 'office' && $this->isOutsideOffice) {
+            Notification::make()
+                ->title('Cannot Check-in')
+                ->body('You are outside the office area. Please move closer to the office or select "Anywhere" as work location.')
                 ->danger()
                 ->send();
             return;
@@ -345,16 +359,17 @@ class AbsenWidget extends Widget implements HasForms
 
             $minimumPerSession = $requiredHours / 2;
 
-            if ($totalTodayHours < $minimumPerSession) {
-                $remainingHours = $minimumPerSession - $totalTodayHours;
+            // Enforce minimum hours per session
+            // if ($totalTodayHours < $minimumPerSession) {
+            //     $remainingHours = $minimumPerSession - $totalTodayHours;
                 
-                Notification::make()
-                    ->title('Insufficient Work Hours')
-                    ->body("You need to work " . number_format($remainingHours, 1) . " more hours. Each work session must be at least {$minimumPerSession} hours.")
-                    ->warning()
-                    ->send();
-                return;
-            }
+            //     Notification::make()
+            //         ->title('Insufficient Work Hours')
+            //         ->body("You need to work " . number_format($remainingHours, 1) . " more hours. Each work session must be at least {$minimumPerSession} hours.")
+            //         ->warning()
+            //         ->send();
+            //     return;
+            // }
 
             // Update attendance with end time (always allow checkout)
             $this->todayAttendance->update([
@@ -378,7 +393,7 @@ class AbsenWidget extends Widget implements HasForms
             if ($totalTodayHours >= $requiredHours) {
                 Notification::make()
                     ->title('Check-out Successful')
-                    ->body('You have successfully checked out at ' . now()->format('H:i') . '. Total work today: ' . number_format($totalTodayHours, 1) . 'h (Required: ' . $requiredHours . 'h) ✓')
+                    ->body('You have successfully checked out at ' . now()->format('H:i') . '. Total work today: ' . number_format($totalTodayHours, 1) . 'h (Required: ' . $requiredHours . 'h) âœ“')
                     ->success()
                     ->send();
             } else {
@@ -452,7 +467,7 @@ class AbsenWidget extends Widget implements HasForms
 
         return [
             'status' => 'completed',
-            'message' => 'Work completed: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h required ✓',
+            'message' => 'Work completed: ' . number_format($totalTodayHours, 1) . 'h / ' . $requiredHours . 'h required âœ“',
             'color' => 'info'
         ];
     }

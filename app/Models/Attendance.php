@@ -47,8 +47,13 @@ class Attendance extends Model
     public function GetLocationAttribute(Request $request): array
     {
         try {
-            // $ipAddress = $request->ip() ?? '182.253.51.18';
-            $ipAddress = '182.253.51.18';
+            $ipAddress = $request->ip();
+            // $ipAddress = '182.253.51.18';
+                    // Untuk testing local, gunakan IP static
+            if ($ipAddress === '127.0.0.1' || $ipAddress === '::1' || str_starts_with($ipAddress, '192.168.')) {
+                $ipAddress = '182.253.51.18'; // IP Indonesia untuk testing
+            }
+
             $geoDetails = Geolocation::lookup($ipAddress);
 
             return [

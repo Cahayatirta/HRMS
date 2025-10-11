@@ -22,19 +22,12 @@
 
                 {{-- Attendance Status Action (Right) --}}
                 <div class="text-right">
-                    @if(in_array($attendanceType, ['check_in', 'additional_check_in']))
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                            {{ $attendanceType === 'additional_check_in' ? 'Additional Check In' : 'Check In' }}
-                        </h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {{ $attendanceType === 'additional_check_in' ? 'Complete your work hours' : 'Start your work day' }}
-                        </p>
+                    @if($attendanceType === 'check_in')
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Check In</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Start your work day</p>
                     @elseif($attendanceType === 'check_out')
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Check Out</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400">End your work day</p>
-                    @elseif($attendanceType === 'completed')
-                        <h3 class="text-lg font-semibold text-green-600 dark:text-green-400 mb-1">Work Completed</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Great job today!</p>
                     @endif
                 </div>
             </div>
@@ -52,7 +45,7 @@
                 @elseif($status['color'] === 'warning') 
                     border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20
                 @else 
-                    border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50
+                    border-gray-200 dark:border-gray-700 dark:bg-gray-800/50
                 @endif">
                 <div class="flex items-center gap-3">
                     @if($status['color'] === 'success')
@@ -95,9 +88,9 @@
             </div>
 
             {{-- Attendance Form --}}
-            @if(in_array($attendanceType, ['check_in', 'additional_check_in']))
+            @if($attendanceType === 'check_in')
                 <div class="space-y-4">
-                    <form wire:submit="{{ $attendanceType === 'additional_check_in' ? 'additionalCheckIn' : 'checkIn' }}">
+                    <form wire:submit="checkIn">
                         {{ $this->form }}
                         
                         <div class="mt-6 flex justify-center">
@@ -105,10 +98,9 @@
                                 type="submit" 
                                 size="lg"
                                 color="success"
-                                :disabled="$isCheckingLocation"
                             >
                                 <x-heroicon-m-arrow-right-on-rectangle class="w-5 h-5 mr-2" />
-                                {{ $isCheckingLocation ? 'Checking Location...' : ($attendanceType === 'additional_check_in' ? 'Check In Again' : 'Check In') }}
+                                Check In
                             </x-filament::button>
                         </div>
                     </form>
@@ -131,38 +123,10 @@
                         </div>
                     </form>
                 </div>
-
-            @elseif($attendanceType === 'completed')
-                <div class="text-center py-8">
-                    <div class="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mb-4">
-                        <x-heroicon-s-check class="w-8 h-8 text-green-600 dark:text-green-400" />
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Work Day Completed</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">You have successfully completed your work for today!</p>
-                    
-                    @if($todayAttendance)
-                        @php
-                            $user = Auth::user();
-                            $employee = App\Models\Employee::where('user_id', $user->id)->first();
-                            $todayAttendances = $employee ? $employee->attendances()
-                                ->whereDate('created_at', today())
-                                ->where('is_deleted', false)
-                                ->whereNotNull('end_time')
-                                ->get() : collect();
-                        @endphp
-                        
-                        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg inline-block">
-                            <div class="text-sm text-gray-600 dark:text-gray-300">
-                                <div><strong>Work Sessions:</strong> {{ $todayAttendances->count() }}</div>
-                                <div><strong>Location:</strong> {{ ucfirst($todayAttendance->work_location) }}</div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
             @endif
 
-            {{-- Quick Stats (if completed) --}}
-            @if($attendanceType === 'completed' && $todayAttendance)
+            {{-- Quick Stats (if checked out today) --}}
+            @if($todayAttendance && $todayAttendance->end_time)
                 @php
                     $user = Auth::user();
                     $employee = App\Models\Employee::where('user_id', $user->id)->first();
@@ -187,7 +151,12 @@
                         $totalMins = round(($totalTodayHours - $totalHours) * 60);
                         
                         $sessionsCount = $todayAttendances->count();
-                        $tasksCount = $todayAttendance->attendanceTasks->count();
+                        
+                        // Count all tasks from all today's attendances
+                        $tasksCount = 0;
+                        foreach ($todayAttendances as $attendance) {
+                            $tasksCount += $attendance->attendanceTasks->count();
+                        }
                     } else {
                         $totalHours = 0;
                         $totalMins = 0;

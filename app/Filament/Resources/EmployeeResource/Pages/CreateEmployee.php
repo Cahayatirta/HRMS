@@ -16,6 +16,7 @@ class CreateEmployee extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Remove user_role dari data employee karena bukan field di table employees
+        // dd($data);
         $userRole = $data['user_role'] ?? null;
         unset($data['user_role']);
 
