@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('service_type_data', function (Blueprint $table) {
             $table->foreignId('field_id')->constrained('service_type_fields')->cascadeOnDelete();
             $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
+            $table->primary(['field_id', 'service_id']);
             $table->string('value');
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();

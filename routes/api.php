@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\AccessApiController;
 // Public Authentication routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/mobile/login', [AuthController::class, 'mobileLogin']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -30,5 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
 // Mobile Sync API
 Route::post('/sync/push', [SyncController::class, 'push'])->middleware('auth:sanctum');
 Route::get('/sync/pull', [SyncController::class, 'pull'])->middleware('auth:sanctum');
+Route::post('/mobile/sync', [SyncController::class, 'mobileSync'])->middleware('auth:sanctum');
 
 // Tomato API routes akan otomatis ter-generate dengan middleware auth:sanctum

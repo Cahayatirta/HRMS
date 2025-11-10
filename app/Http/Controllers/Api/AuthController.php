@@ -53,6 +53,68 @@ class AuthController extends Controller
     }
 
     /**
+     * Mobile login - returns user, employee, and division info
+     */
+    public function mobileLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided credentials are incorrect.',
+            ], 401);
+        }
+
+        // Check if user is deleted
+        if ($user->is_deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account has been deactivated.',
+            ], 403);
+        }
+
+        // Delete all existing tokens for this user (single session per device)
+        $user->tokens()->delete();
+
+        // Create new token
+        $token = $user->createToken('mobile-app-token')->plainTextToken;
+
+        // Get employee and division data
+        $employee = $user->employee;
+        $division = $employee ? $employee->division : null;
+
+        // Calculate token expiry (1 year from now)
+        $expiresAt = now()->addYear()->format('Y-m-d H:i:s');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'role' => $user->role ?? 'USER',
+                ],
+                'token' => $token,
+                'expires_at' => $expiresAt,
+                'employee' => $employee ? [
+                    'id' => $employee->id,
+                    'full_name' => $employee->full_name,
+                ] : null,
+                'division' => $division ? [
+                    'name' => $division->division_name,
+                ] : null,
+            ]
+        ], 200);
+    }
+
+    /**
      * Register new user
      */
     public function register(Request $request)

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('account_type');
             $table->string('account_credential');
             $table->string('account_password');
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }
