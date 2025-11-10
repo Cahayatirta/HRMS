@@ -187,13 +187,25 @@ class SyncController extends Controller
 
         if (!empty($payload['tasks'])) {
             foreach ($payload['tasks'] as $data) {
+                // Map mobile field names to database column names
+                $mappedData = [
+                    'task_name' => $data['name'] ?? 'Unnamed Task',  // Provide default if missing
+                    'task_description' => $data['description'] ?? '',
+                    'status' => $data['status'] ?? 'pending',
+                    'deadline' => $data['deadline'] ?? now()->addDays(7)->format('Y-m-d'),
+                    'is_deleted' => $data['is_deleted'] ?? false,
+                    'created_at' => $data['created_at'] ?? now(),
+                    'updated_at' => $data['updated_at'] ?? now(),
+                ];
+                
+                \Log::info('Task sync data:', ['original' => $data, 'mapped' => $mappedData]);
+                
                 if ($data['id'] < 0) {
-                    unset($data['id']);
-                    Task::create($data);
+                    Task::create($mappedData);
                 } else {
                     $existing = Task::find($data['id']);
                     if (!$existing || $existing->updated_at <= $data['updated_at']) {
-                        Task::updateOrCreate(['id' => $data['id']], $data);
+                        Task::updateOrCreate(['id' => $data['id']], $mappedData);
                     }
                 }
             }
@@ -437,14 +449,24 @@ class SyncController extends Controller
 
         if (!empty($payload['tasks'])) {
             foreach ($payload['tasks'] as $data) {
+                // Map mobile field names to database column names
+                $mappedData = [
+                    'task_name' => $data['name'] ?? 'Unnamed Task',
+                    'task_description' => $data['description'] ?? '',
+                    'status' => $data['status'] ?? 'pending',
+                    'deadline' => $data['deadline'] ?? now()->addDays(7)->format('Y-m-d'),
+                    'is_deleted' => $data['is_deleted'] ?? false,
+                    'created_at' => $data['created_at'] ?? now(),
+                    'updated_at' => $data['updated_at'] ?? now(),
+                ];
+                
                 if (isset($data['id']) && $data['id'] > 0) {
                     $existing = Task::find($data['id']);
                     if (!$existing || (isset($data['updated_at']) && $existing->updated_at <= $data['updated_at'])) {
-                        Task::updateOrCreate(['id' => $data['id']], $data);
+                        Task::updateOrCreate(['id' => $data['id']], $mappedData);
                     }
                 } else {
-                    unset($data['id']);
-                    Task::create($data);
+                    Task::create($mappedData);
                 }
             }
         }
@@ -503,8 +525,8 @@ class SyncController extends Controller
                 'attendance_id' => $task->attendance_id,
                 'task_id' => $task->task_id,
                 'is_deleted' => (bool) ($task->is_deleted ?? false),
-                'created_at' => $task->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $task->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $task->created_at ? (is_string($task->created_at) ? $task->created_at : $task->created_at->format('Y-m-d H:i:s')) : null,
+                'updated_at' => $task->updated_at ? (is_string($task->updated_at) ? $task->updated_at : $task->updated_at->format('Y-m-d H:i:s')) : null,
             ];
         });
 
