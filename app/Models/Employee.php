@@ -14,6 +14,19 @@ class Employee extends Model
         'user_id', 'division_id', 'full_name', 'gender', 'birth_date', 'phone_number', 'address', 'image_path', 'status', 'is_deleted'
     ];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -23,6 +23,7 @@ use App\Models\ServiceTypeData;
 use App\Models\ServiceTypeField;
 use App\Models\Task;
 use App\Models\WorkhourPlan;
+use App\Helpers\TimestampHelper;
 
 class SyncController extends Controller
 {
@@ -189,10 +190,12 @@ class SyncController extends Controller
             foreach ($payload['tasks'] as $data) {
                 // Map mobile field names to database column names
                 $mappedData = [
-                    'task_name' => $data['name'] ?? 'Unnamed Task',  // Provide default if missing
-                    'task_description' => $data['description'] ?? '',
-                    'status' => $data['status'] ?? 'pending',
+                    'task_name' => $data['task_name'] ?? 'Unnamed Task',
+                    'task_description' => $data['task_description'] ?? '',
+                    'status' => strtolower($data['status'] ?? 'pending'), // Convert to lowercase for database
                     'deadline' => $data['deadline'] ?? now()->addDays(7)->format('Y-m-d'),
+                    'parent_task_id' => $data['parent_task_id'] ?? null,
+                    'note' => $data['note'] ?? null,
                     'is_deleted' => $data['is_deleted'] ?? false,
                     'created_at' => $data['created_at'] ?? now(),
                     'updated_at' => $data['updated_at'] ?? now(),
@@ -504,19 +507,26 @@ class SyncController extends Controller
 
         // Fetch all data
         $attendances = $baseQuery(Attendance::class)->get()->map(function ($attendance) {
+            // Combine date from created_at with start_time and end_time
+            $date = $attendance->created_at ? $attendance->created_at->format('Y-m-d') : now()->format('Y-m-d');
+            
+            // Combine date + time for start_time
+            $startDateTime = $date . ' ' . $attendance->start_time;
+            $endDateTime = $attendance->end_time ? ($date . ' ' . $attendance->end_time) : null;
+            
             return [
                 'id' => $attendance->id,
                 'employee_id' => $attendance->employee_id,
-                'start_time' => $attendance->start_time,
-                'end_time' => $attendance->end_time,
+                'start_time' => $startDateTime,
+                'end_time' => $endDateTime,
                 'work_location' => $attendance->work_location,
                 'longitude' => $attendance->longitude ? (string) $attendance->longitude : null,
                 'latitude' => $attendance->latitude ? (string) $attendance->latitude : null,
                 'image_path' => $attendance->image_path ?? '',
                 'task_link' => $attendance->task_link ?? '',
                 'is_deleted' => (bool) $attendance->is_deleted,
-                'created_at' => $attendance->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $attendance->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $attendance->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $attendance->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -525,21 +535,21 @@ class SyncController extends Controller
                 'attendance_id' => $task->attendance_id,
                 'task_id' => $task->task_id,
                 'is_deleted' => (bool) ($task->is_deleted ?? false),
-                'created_at' => $task->created_at ? (is_string($task->created_at) ? $task->created_at : $task->created_at->format('Y-m-d H:i:s')) : null,
-                'updated_at' => $task->updated_at ? (is_string($task->updated_at) ? $task->updated_at : $task->updated_at->format('Y-m-d H:i:s')) : null,
+                'created_at' => $task->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $task->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
         $clients = $baseQuery(Client::class)->get()->map(function ($client) {
             return [
                 'id' => $client->id,
-                'full_name' => $client->name,
+                'name' => $client->name,
                 'email' => $client->email,
                 'phone_number' => $client->phone_number,
                 'address' => $client->address,
                 'is_deleted' => (bool) $client->is_deleted,
-                'created_at' => $client->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $client->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $client->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $client->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -551,8 +561,8 @@ class SyncController extends Controller
                 'account_credentials' => $data->account_credential,
                 'account_password' => $data->account_password,
                 'is_deleted' => (bool) ($data->is_deleted ?? false),
-                'created_at' => $data->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $data->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $data->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $data->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -561,11 +571,11 @@ class SyncController extends Controller
                 'id' => $meeting->id,
                 'title' => $meeting->meeting_title,
                 'note' => $meeting->meeting_note ?? '',
-                'start_time' => $meeting->date . ' ' . $meeting->start_time,
-                'end_time' => $meeting->date . ' ' . $meeting->end_time,
+                'start_time' => $meeting->start_time->format('Y-m-d H:i:s'),
+                'end_time' => $meeting->end_time->format('Y-m-d H:i:s'),
                 'is_deleted' => (bool) $meeting->is_deleted,
-                'created_at' => $meeting->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $meeting->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $meeting->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $meeting->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -574,8 +584,8 @@ class SyncController extends Controller
                 'meeting_id' => $mu->meeting_id,
                 'user_id' => $mu->user_id,
                 'is_deleted' => (bool) ($mu->is_deleted ?? false),
-                'created_at' => $mu->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $mu->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $mu->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $mu->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -584,8 +594,8 @@ class SyncController extends Controller
                 'meeting_id' => $mc->meeting_id,
                 'client_id' => $mc->client_id,
                 'is_deleted' => (bool) ($mc->is_deleted ?? false),
-                'created_at' => $mc->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $mc->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $mc->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $mc->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -599,8 +609,8 @@ class SyncController extends Controller
                 'start_time' => $service->start_time,
                 'expired_time' => $service->expired_time,
                 'is_deleted' => (bool) $service->is_deleted,
-                'created_at' => $service->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $service->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $service->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $service->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -610,8 +620,8 @@ class SyncController extends Controller
                 'name' => $type->name,
                 'description' => $type->description ?? '',
                 'is_deleted' => (bool) $type->is_deleted,
-                'created_at' => $type->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $type->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $type->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $type->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -621,8 +631,8 @@ class SyncController extends Controller
                 'service_type_id' => $field->service_type_id,
                 'field_name' => $field->field_name,
                 'is_deleted' => (bool) ($field->is_deleted ?? false),
-                'created_at' => $field->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $field->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $field->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $field->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -632,8 +642,8 @@ class SyncController extends Controller
                 'service_id' => $data->service_id,
                 'value' => $data->value,
                 'is_deleted' => (bool) ($data->is_deleted ?? false),
-                'created_at' => $data->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $data->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $data->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $data->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -645,8 +655,8 @@ class SyncController extends Controller
                 'status' => $task->status,
                 'deadline' => $task->deadline,
                 'is_deleted' => (bool) $task->is_deleted,
-                'created_at' => $task->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $task->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $task->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $task->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -655,8 +665,8 @@ class SyncController extends Controller
                 'employee_id' => $et->employee_id,
                 'task_id' => $et->task_id,
                 'is_deleted' => (bool) ($et->is_deleted ?? false),
-                'created_at' => $et->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $et->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $et->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $et->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -664,10 +674,10 @@ class SyncController extends Controller
             return [
                 'id' => $user->id,
                 'email' => $user->email,
-                'role' => $user->role ?? 'user',
+                'role' => strtoupper($user->role ?? 'USER'),
                 'is_deleted' => (bool) $user->is_deleted,
-                'created_at' => $user->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $user->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $user->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $user->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -683,8 +693,8 @@ class SyncController extends Controller
                 'address' => $employee->address,
                 'image_path' => $employee->image_path ?? '',
                 'is_deleted' => (bool) $employee->is_deleted,
-                'created_at' => $employee->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $employee->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $employee->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $employee->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -694,8 +704,8 @@ class SyncController extends Controller
                 'name' => $division->division_name,
                 'required_workhours' => $division->required_workhours,
                 'is_deleted' => (bool) $division->is_deleted,
-                'created_at' => $division->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $division->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $division->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $division->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -708,8 +718,8 @@ class SyncController extends Controller
                 'planned_end_time' => $plan->planned_endtime,
                 'work_location' => $plan->work_location,
                 'is_deleted' => (bool) $plan->is_deleted,
-                'created_at' => $plan->created_at?->format('Y-m-d H:i:s'),
-                'updated_at' => $plan->updated_at?->format('Y-m-d H:i:s'),
+                'created_at' => $plan->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $plan->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 

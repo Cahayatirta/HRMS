@@ -21,6 +21,19 @@ class DivisionAccess extends Model
         'division_id',
     ];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function access(): BelongsTo
     {
         return $this->belongsTo(Access::class, 'access_id', 'access_id');

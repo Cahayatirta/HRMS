@@ -18,6 +18,19 @@ class Attendance extends Model
         'longitude', 'latitude', 'image_path', 'task_link', 'is_deleted'
     ];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');

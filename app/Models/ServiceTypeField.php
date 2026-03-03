@@ -12,6 +12,19 @@ class ServiceTypeField extends Model
 
     protected $fillable = ['service_type_id', 'field_name', 'is_deleted'];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function serviceType()
     {
         return $this->belongsTo(ServiceType::class, 'service_type_id');

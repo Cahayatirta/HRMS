@@ -21,7 +21,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\TextArea;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 
 // Filament Tables
@@ -172,14 +172,18 @@ class MeetingResource extends Resource
             ->schema([
                 TextInput::make('meeting_title')
                     ->required(),
-                DatePicker::make('date')
-                    ->required(),
                 Textarea::make('meeting_note')
                     ->columnSpanFull(),
-                TextInput::make('start_time')
-                    ->required(),
-                TextInput::make('end_time')
-                    ->required(),
+                DateTimePicker::make('start_time')
+                    ->required()
+                    ->native(false)
+                    ->displayFormat('Y-m-d H:i:s')
+                    ->seconds(true),
+                DateTimePicker::make('end_time')
+                    ->required()
+                    ->native(false)
+                    ->displayFormat('Y-m-d H:i:s')
+                    ->seconds(true),
                 Toggle::make('is_deleted')
                     ->hidden(),
                 Select::make('users')
@@ -205,11 +209,12 @@ class MeetingResource extends Resource
             ->columns([
                 TextColumn::make('meeting_title')
                     ->searchable(),
-                TextColumn::make('date')
-                    ->date()
+                TextColumn::make('start_time')
+                    ->dateTime()
                     ->sortable(),
-                TextColumn::make('start_time'),
-                TextColumn::make('end_time'),
+                TextColumn::make('end_time')
+                    ->dateTime()
+                    ->sortable(),
                 ToggleColumn::make('is_deleted')
                     ->label('Deleted')
                     ->sortable()
