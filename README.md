@@ -1,178 +1,65 @@
-# HRMS
+# HRMS Application
 
-## Project Overview
+Human Resource Management System built with Laravel, Livewire, and Filament.
 
-This repository contains the codebase for an HRMS (Human Resource Management System). While no detailed description was initially provided, this system appears to be built using PHP and JavaScript, leveraging tools like Tailwind CSS, Filament, and GitHub Actions for CI/CD. The project aims to streamline HR processes, potentially including access control, data management, and other related functionalities.
+## Installation
 
-## Key Features & Benefits (Inferred)
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   composer install
+   npm install
+   ```
+3. Copy `.env.example` to `.env` and configure your database
+4. Run migrations and seed the database:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+5. Start the development server:
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
 
-Based on the file structure and technologies used, the HRMS likely offers the following features:
+## Test Accounts
 
-*   **Access Control:** Implemented using `AccessResource` and `AccessApiService`, enabling role-based permission management and controlled access to sensitive data.
-*   **API Integration:** `AccessApiService` suggests the system utilizes API endpoints for data retrieval and manipulation.
-*   **User Interface:** Built with Filament and Tailwind CSS, providing a modern and responsive user experience.
-*   **Automated Testing and Linting:** Configured with GitHub Actions (`lint.yml` and `tests.yml`), ensuring code quality and stability through automated checks.
-*   **Geolocalization:**  The presence of `filament-geolocate-me` suggests location tracking capabilities for employees or resources.
+The following test accounts are created by the seeder:
 
-## Prerequisites & Dependencies
+| Email | Password | Role | Division | Employee Status |
+|-------|----------|------|----------|-----------------|
+| **admin@company.com** | admin123 | Admin | Project Manager | Active |
+| **john.doe@company.com** | password123 | User | Project Manager | Active |
+| **jane.smith@company.com** | password123 | User | Developer | Active |
+| **bob@company.com** | password123 | User | Designer | Active |
+| **alice@company.com** | password123 | User | QA Tester | Active |
 
-Before you begin, ensure you have the following installed:
+## Features
 
-*   **PHP:** Version 8.0 or higher (recommended).
-*   **Node.js:** Version 16 or higher (required for frontend assets).
-*   **Composer:** PHP dependency manager.
-*   **npm** or **yarn:** JavaScript package manager.
-*   **MySQL** or another compatible database.
+- **User Authentication** - Login/logout functionality with role-based access
+- **Employee Management** - Manage employee records with divisions
+- **Attendance Tracking** - Check-in/check-out system with location tracking
+- **Task Management** - Assign and track tasks for employees
+- **Client Management** - Manage client information and services
+- **Meeting Scheduling** - Schedule meetings with users and clients
+- **Filament Admin Panel** - Full-featured admin interface at `/admin`
+- **Dashboard** - User dashboard at `/dashboard`
 
-**PHP Extensions:**
+## Access Levels
 
-*   pdo\_mysql
-*   mbstring
-*   gd
-*   curl
+### Admin Users
+- Full access to all features
+- Can access Filament admin panel at `/admin`
+- Can manage all system resources
 
-## Installation & Setup Instructions
+### Regular Users
+- Can access Filament admin panel if they have an active employee record
+- Can view and manage their own tasks and attendance
+- Access restricted based on division permissions
 
-1.  **Clone the Repository:**
+## Technology Stack
 
-    ```bash
-    git clone git@github.com:Cahayatirta/HRMS.git
-    cd HRMS
-    ```
-
-2.  **Install PHP Dependencies:**
-
-    ```bash
-    composer install
-    ```
-
-3.  **Install JavaScript Dependencies:**
-
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
-
-4.  **Configure Environment Variables:**
-
-    *   Copy `.env.example` to `.env`:
-
-        ```bash
-        cp .env.example .env
-        ```
-
-    *   Edit the `.env` file with your database credentials, application URL, and other configurations:
-
-        ```
-        DB_CONNECTION=mysql
-        DB_HOST=127.0.0.1
-        DB_PORT=3306
-        DB_DATABASE=your_database_name
-        DB_USERNAME=your_database_user
-        DB_PASSWORD=your_database_password
-
-        APP_URL=http://localhost
-        ```
-
-5.  **Generate Application Key:**
-
-    ```bash
-    php artisan key:generate
-    ```
-
-6.  **Run Database Migrations:**
-
-    ```bash
-    php artisan migrate
-    ```
-
-7.  **Compile Assets:**
-
-    ```bash
-    npm run build
-    # or
-    yarn build
-    ```
-
-8.  **Serve the Application:**
-
-    ```bash
-    php artisan serve
-    ```
-
-    This will start the development server.  Open your browser and navigate to the URL specified in the output (typically `http://localhost:8000`).
-
-9. **QuickShield Setup (Optional):**
-
-    Run the `QuickShieldSetup` command.  The purpose of this command is not fully clear without additional information, but it may involve setting up security features.
-
-    ```bash
-    php artisan quickshield:setup
-    ```
-
-## Usage Examples & API Documentation
-
-Due to the lack of detailed documentation, specific usage examples and API documentation are unavailable.  However, the following can be inferred:
-
-*   **Access Control:**  Utilize the Filament resources (e.g., `AccessResource.php`) to manage user roles and permissions.
-*   **API Endpoints:** Explore the `Api/AccessApiService.php` file to understand available API endpoints and their functionalities.  Common endpoints might include:
-    *   `/api/access/create` (or similar): To create new access entries (handled by `CreateHandler.php`).
-
-**Example API Call (Conceptual):**
-
-```javascript
-// Example using Axios
-import axios from 'axios';
-
-axios.post('/api/access/create', {
-  user_id: 1,
-  resource: 'dashboard',
-  permission: 'read'
-})
-.then(response => {
-  console.log(response.data);
-})
-.catch(error => {
-  console.error(error);
-});
-```
-
-**Note:**  Replace `/api/access/create` with the actual API endpoint and adjust the request parameters accordingly.
-
-## Configuration Options
-
-The primary configuration is done through the `.env` file.  Key variables include:
-
-*   **Database Configuration:** `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-*   **Application URL:** `APP_URL`
-*   **Debugging:** `APP_DEBUG` (set to `true` for development, `false` for production)
-
-Additional configuration options might be available within the Filament resources or other parts of the codebase.
-
-## Contributing Guidelines
-
-We welcome contributions! To contribute:
-
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and ensure that all tests pass.
-4.  Submit a pull request with a clear description of your changes.
-
-Please follow these guidelines:
-
-*   Write clear and concise commit messages.
-*   Adhere to the existing code style.
-*   Include tests for new features and bug fixes.
-*   Document your code thoroughly.
-
-## License Information
-
-License not specified. All rights reserved by Cahayatirta. Further clarification is required to determine the licensing terms.
-
-## Acknowledgments
-
-*   Tailwind CSS
-*   Filament
-*   Laravel
-*   GitHub Actions
+- **Backend:** Laravel 11
+- **Frontend:** Livewire (Volt), TailwindCSS 4.0, Flux UI
+- **Admin Panel:** Filament 3.x
+- **Authentication:** Laravel Sanctum + Session-based auth
+- **Database:** MySQL/SQLite

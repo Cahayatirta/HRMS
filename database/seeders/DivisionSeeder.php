@@ -11,23 +11,35 @@ class DivisionSeeder extends Seeder
     {
         DB::table('divisions')->insert([
             [
-                'division_name' => 'Human Resources',
-                'required_workhours' => 8,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'division_name' => 'Developer',
+                'required_workhours' => 40,
+                'is_deleted' => false,
+                'created_at' => '2024-05-01 09:00:00',
+                'updated_at' => '2024-05-01 09:00:00',
             ],
             [
-                'division_name' => 'Information Technology',
-                'required_workhours' => 8,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'division_name' => 'Project Manager',
+                'required_workhours' => 40,
+                'is_deleted' => false,
+                'created_at' => '2024-05-01 09:00:00',
+                'updated_at' => '2024-05-01 09:00:00',
             ],
             [
-                'division_name' => 'Marketing',
-                'required_workhours' => 7,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'division_name' => 'Designer',
+                'required_workhours' => 40,
+                'is_deleted' => false,
+                'created_at' => '2024-05-01 09:00:00',
+                'updated_at' => '2024-05-01 09:00:00',
+            ],
+            [
+                'division_name' => 'QA Tester',
+                'required_workhours' => 35,
+                'is_deleted' => false,
+                'created_at' => '2024-05-01 09:00:00',
+                'updated_at' => '2024-05-01 09:00:00',
             ],
         ]);
+
+        $this->command->info('Divisions seeded successfully!');
     }
 }

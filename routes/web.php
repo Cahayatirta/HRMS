@@ -5,6 +5,10 @@ use Livewire\Volt\Volt;
 use App\Http\Controllers\AbsenController;
 
 Route::get('/', function () {
+    // Redirect authenticated users to admin panel
+    if (auth()->check()) {
+        return redirect('/admin');
+    }
     return view('welcome');
 })->name('home');
 
