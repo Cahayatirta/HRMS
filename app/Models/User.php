@@ -49,7 +49,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_deleted' => 'boolean',
         ];
+    }
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use Y-m-d H:i:s format
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
     }
 
     /**

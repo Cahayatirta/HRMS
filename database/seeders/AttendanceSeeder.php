@@ -12,8 +12,8 @@ class AttendanceSeeder extends Seeder
         DB::table('attendances')->insert([
             [
                 'employee_id' => 1,
-                'start_time' => '08:00:00',
-                'end_time' => '17:00:00',
+                'start_time' => '2024-06-12 08:00:00',
+                'end_time' => '2024-06-12 17:00:00',
                 'work_location' => 'office',
                 'longitude' => 106.8456,
                 'latitude' => -6.2088,
@@ -25,8 +25,8 @@ class AttendanceSeeder extends Seeder
             ],
             [
                 'employee_id' => 2,
-                'start_time' => '09:00:00',
-                'end_time' => '18:00:00',
+                'start_time' => '2024-06-12 09:00:00',
+                'end_time' => '2024-06-12 18:00:00',
                 'work_location' => 'anywhere',
                 'longitude' => null,
                 'latitude' => null,
@@ -38,7 +38,7 @@ class AttendanceSeeder extends Seeder
             ],
             [
                 'employee_id' => 1,
-                'start_time' => '08:30:00',
+                'start_time' => '2024-06-13 08:30:00',
                 'end_time' => null,
                 'work_location' => 'office',
                 'longitude' => 106.8456,

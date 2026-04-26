@@ -15,6 +15,19 @@ class Task extends Model
         'parent_task_id', 'note', 'is_deleted'
     ];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function employees()
     {
         return $this->belongsToMany(Employee::class, 'employee_tasks', 'task_id', 'employee_id')->withTimestamps();

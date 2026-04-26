@@ -18,6 +18,15 @@ class Access extends Model
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function divisions()
     {
         return $this->belongsToMany(Division::class, 'division_accesses', 'access_id', 'division_id')->withTimestamps();

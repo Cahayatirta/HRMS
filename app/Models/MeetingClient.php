@@ -15,6 +15,19 @@ class MeetingClient extends Model
         'is_deleted'
     ];
 
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     * This ensures all datetime fields use ISO 8601 format with microseconds
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return \Illuminate\Support\Carbon::instance($date)->format('Y-m-d H:i:s');
+    }
+
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class, 'meeting_id');
